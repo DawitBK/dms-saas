@@ -1,0 +1,3 @@
+-- Intentionally irreversible: the inserted rows are indistinguishable from
+-- legitimate owner/department grants after deployment and deleting by bundle
+-- type could remove grants added later by an administrator.

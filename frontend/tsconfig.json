@@ -1,0 +1,33 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "module": "ESNext",
+    "allowJs": false,
+    "noEmit": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "isolatedModules": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@features/*": ["./features/*"],
+      "@shared/*": ["./shared/*"],
+      "@state/*": ["./state/*"],
+      "@providers/*": ["./providers/*"],
+      "@app/*": ["./app/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  // Test files are excluded from the APP typecheck (which `next build` runs)
+  // on purpose: they import vitest / @testing-library, which are
+  // devDependencies. A production install (`npm ci --omit=dev`) doesn't have
+  // them, so leaving them in made `next build` fail on the deployment box
+  // with "Cannot find module 'vitest'" even though nothing shipped uses it.
+  // `npm test` (vitest, esbuild — no typecheck) still runs them, and
+  // `npm run typecheck:test` typechecks them against tsconfig.test.json.
+  "exclude": ["node_modules", "tests/**", "**/*.test.ts", "**/*.test.tsx", "vitest.config.ts"]
+}

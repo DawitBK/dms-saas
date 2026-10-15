@@ -1,0 +1,53 @@
+-- R-02 (AUDIT-FINDINGS-2026-09-03.md): a tenant's audited writes are
+-- serialised, and that is the system-wide write-throughput ceiling.
+--
+-- writeAuditLog() takes pg_advisory_xact_lock per tenant. That is correct and
+-- load-bearing: the chain tip is read from committed DB state under the lock,
+-- so the lock is what guarantees the previous writer has committed before the
+-- next one reads. Reading the tip from cache instead reintroduces a race that
+-- durably commits a row skipping the real last entry, which then reads as
+-- tampering.
+--
+-- But an advisory XACT lock is held until the transaction commits, and
+-- writeAuditLog runs inside the REQUEST transaction, which commits at
+-- response-finish time (shared/middleware.ts). So the lock is held from a
+-- request's first audit write until its response is flushed — including any
+-- slow work that follows, such as PDF rendering or object-storage uploads.
+-- Every other mutating request in that tenant waits behind it. Example Corp
+-- runs effectively one tenant, so this is the global write ceiling.
+--
+-- The two properties in tension are (a) the audit row commits atomically with
+-- the domain change it records — proven by test-scripts/verify-audit-atomicity
+-- .ts, and deliberately built — and (b) short lock hold times. With a single
+-- chain per tenant you cannot have both: any scheme that releases the lock
+-- before commit reintroduces the stale-tip race.
+--
+-- So: more chains. Each (tenant, chain_shard) pair is its own independently
+-- verifiable hash chain, and the advisory lock is taken per shard, so N shards
+-- give N concurrent audited writers per tenant while every row still commits
+-- with its domain change. A hash chain provides tamper-evidence, not a total
+-- order, and N parallel chains are exactly as tamper-evident as one provided
+-- every row belongs to exactly one chain and every chain is verified —
+-- verifyAuditChain() now keys its state by (tenant, shard) rather than tenant.
+--
+-- Existing rows default to shard 0, so the current chain continues unbroken as
+-- chain 0 and no historical hash changes. chain_shard is deliberately NOT part
+-- of the hashed chainData: including it would invalidate every existing row's
+-- entryHash. Moving a row between shards is still detected, twice over, as a
+-- linkage break in the chain it left and in the chain it joined.
+--
+-- Shards are assigned at random per write rather than derived from row
+-- content, which makes AUDIT_CHAIN_SHARDS safe to change later: existing rows
+-- keep the shard they were written to, and only the distribution of new rows
+-- changes. Lowering it leaves the retired shards' chains valid and verifiable;
+-- raising it starts new chains whose first row has a NULL previousHash, which
+-- is what a chain genesis row looks like anyway.
+ALTER TABLE audit_logs
+  ADD COLUMN IF NOT EXISTS chain_shard SMALLINT NOT NULL DEFAULT 0;
+
+-- The tip lookup is "latest row for this (tenant, shard)", so it needs the
+-- shard in the key. This supersedes audit_logs_tenant_seq_idx for that query;
+-- that index is left in place because the tenant-wide, shard-agnostic scans
+-- (verifyAuditChain, the audit list and export endpoints) still use it.
+CREATE INDEX IF NOT EXISTS audit_logs_tenant_shard_seq_idx
+  ON audit_logs (tenant_id, chain_shard, sequence_number DESC);

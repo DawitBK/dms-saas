@@ -1,0 +1,4 @@
+-- Intentionally irreversible: the migration does not record each folder's
+-- prior (misrooted) parent_id/path/level anywhere, and reconstructing it
+-- would only recreate the bug this migration exists to fix. A rollback must
+-- not re-detach sub-department folders from their parent department's folder.

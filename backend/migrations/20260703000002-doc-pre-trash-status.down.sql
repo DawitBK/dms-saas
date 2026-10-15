@@ -1,0 +1,16 @@
+-- Reverts 20260703000002-doc-pre-trash-status.sql.
+--
+-- The pre_trash_status column is purely additive (nullable, nothing else
+-- depends on it) and is dropped below; any captured pre-trash lifecycle
+-- values are lost, which is expected since the app code being rolled back to
+-- never reads this column and restore-from-trash goes back to always
+-- resetting a document to DRAFT.
+--
+-- The two UPDATE statements that normalized legacy lowercase 'trashed'/
+-- 'quarantined' statuses to 'TRASHED'/'QUARANTINED' are NOT reversed: there
+-- is no record of which rows were actually touched by this migration versus
+-- rows that legitimately reached TRASHED/QUARANTINED afterward through
+-- normal app flow, so reversing the casing would incorrectly corrupt
+-- documents that were never lowercase to begin with. down() for that part
+-- is intentionally a no-op.
+ALTER TABLE documents DROP COLUMN IF EXISTS pre_trash_status;

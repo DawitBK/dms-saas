@@ -1,0 +1,5 @@
+# Shell scripts are volume-mounted into Linux containers straight from the
+# checkout (deploy/postgres-init, deploy/backup) — CRLF line endings break
+# /bin/sh. Force LF regardless of the checkout platform.
+*.sh text eol=lf
+Caddyfile text eol=lf

@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS idx_folder_nodes_tenant_active_level_name;

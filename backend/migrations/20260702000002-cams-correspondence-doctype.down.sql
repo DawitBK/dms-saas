@@ -1,0 +1,8 @@
+-- Data-only migration (seed INSERTs guarded by ON CONFLICT DO NOTHING /
+-- WHERE NOT EXISTS, no schema change). The RET-CORR-5Y retention policy and
+-- per-tenant CORR document type it seeds are reference/lookup rows that real
+-- filed letters (from 20260702000001-cams-foundation.sql onward) may already
+-- reference by foreign key (documents.document_type_id). Deleting them here
+-- would risk an FK violation or cascading away real correspondence documents,
+-- and there is no reliable way to tell a still-unused seed row from one
+-- genuinely in use. down() for this migration is intentionally a no-op.

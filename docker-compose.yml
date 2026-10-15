@@ -1,0 +1,94 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: ./backend/.env
+    environment:
+      ENABLE_QUEUE_WORKERS: "false"
+      ENABLE_OUTBOX_POLLING: "false"
+      PORT: "7100"
+      TZ: UTC
+    depends_on: [postgres, redis, minio, meilisearch, clamav]
+    ports: ["7100:7100"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:7100/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["node", "dist/src/bin/worker.js"]
+    env_file: ./backend/.env
+    environment:
+      ENABLE_QUEUE_WORKERS: "true"
+      ENABLE_OUTBOX_POLLING: "true"
+      TZ: UTC
+    depends_on: [backend, redis, minio, meilisearch, clamav]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:7100/api/v1
+        NEXT_PUBLIC_SOCKET_URL: http://localhost:7100
+        NEXT_PUBLIC_APP_URL: http://localhost:7101
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      PORT: "7101"
+    ports: ["7101:7101"]
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: change-me-dev-password
+      POSTGRES_DB: DMS
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes: [redis_data:/data]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes: [minio_data:/data]
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    environment:
+      MEILI_MASTER_KEY: devmasterkey123
+
+  clamav:
+    image: clamav/clamav:latest
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3001:3000"]
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  meili_data:
+

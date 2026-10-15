@@ -1,0 +1,13 @@
+# Keeps the Docker build context small and the image reproducible — never
+# ship local node_modules/dist/.env into the build (they get reinstalled/
+# rebuilt inside the image from package-lock.json, which is the whole point).
+**/node_modules
+**/dist
+**/.next
+**/.git
+**/*.log
+**/.env
+**/.env.local
+**/storage
+backend/test-results.json
+backend/coverage

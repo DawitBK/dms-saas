@@ -1,0 +1,18 @@
+-- Data-only migration (INSERT ... ON CONFLICT DO NOTHING / WHERE NOT EXISTS
+-- seed backfill only, no schema change). It re-applies retention_policies
+-- and document_types/departments seeding as a safety net for tenants that
+-- were created between earlier seeding migrations and this one, so most of
+-- what it inserts on any given database was either already present (the
+-- ON CONFLICT / NOT EXISTS guards made those a no-op) or is reference data
+-- (retention policy codes, document type codes, an "Uncategorized"
+-- department) that real documents may already be filed against by the time
+-- anyone considers rolling this back.
+--
+-- There is no reliable way to tell "a row this migration actually inserted"
+-- apart from "a row that already existed for an unrelated reason", and
+-- deleting a document_type or department that any document/form now
+-- references would either fail on the FK or (worse) succeed and orphan that
+-- reference. Deleting seed/reference rows on a schema rollback is also not
+-- what this migration's own intent was — it was a forward-only safety net,
+-- not a feature to be toggled off. down() for this migration is
+-- intentionally a no-op.

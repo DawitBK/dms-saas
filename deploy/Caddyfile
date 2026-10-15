@@ -1,0 +1,30 @@
+# EDAMS production reverse proxy — TLS via Let's Encrypt (automatic).
+# APP_DOMAIN/API_DOMAIN/ACME_EMAIL come from .env.prod via compose.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode gzip
+
+	# Grafana (optional) under /grafana — comment out if unused.
+	handle_path /grafana* {
+		reverse_proxy grafana:3000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
+
+{$API_DOMAIN} {
+	encode gzip
+
+	# The unauthenticated Prometheus scrape endpoint is for the internal
+	# Docker network only — never forward it to the internet.
+	@metrics path /metrics
+	respond @metrics 404
+
+	reverse_proxy backend:4000
+}

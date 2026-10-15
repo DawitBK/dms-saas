@@ -1,0 +1,1217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS — Light mode (default)
+═══════════════════════════════════════════════════════ */
+:root {
+  /* Brand */
+  --brand-50: #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-300: #a5b4fc;
+  --brand-400: #818cf8;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-800: #3730a3;
+  --brand-900: #312e81;
+
+  /* Sidebar — default (no theme class) uses dark black style */
+  --sidebar-bg: #050505;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+  --sidebar-text: #6b7280;
+  --sidebar-text-hover: #a8a8a8;
+  --sidebar-text-active: #fafafa;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-active-border: #6b7280;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.03);
+  --sidebar-section-text: #4a4a4a;
+  --sidebar-logo-text: #fafafa;
+  --sidebar-logo-sub: #6b7280;
+
+  /* Page surfaces */
+  --surface: #f4f6fb;
+  --surface-card: #ffffff;
+  --surface-raised: #f8fafd;
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+
+  /* Borders */
+  --border: #e2e8f0;
+  --border-subtle: #f0f4f8;
+  --border-strong: #cbd5e1;
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-placeholder: #c0cad8;
+
+  /* Semantic colours */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-text: #065f46;
+
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
+
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --danger-text: #991b1b;
+
+  --info: #2563eb;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --info-text: #1e40af;
+
+  /* Document status */
+  --status-draft: #94a3b8;
+  --status-review: #f59e0b;
+  --status-active: #10b981;
+  --status-archived: #64748b;
+  --status-hold: #ef4444;
+  --status-disposed: #6b7280;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm:
+    0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  --shadow-md:
+    0 4px 8px -2px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg:
+    0 12px 24px -4px rgba(15, 23, 42, 0.1),
+    0 4px 8px -4px rgba(15, 23, 42, 0.06);
+  --shadow-xl:
+    0 24px 48px -8px rgba(15, 23, 42, 0.14),
+    0 8px 16px -8px rgba(15, 23, 42, 0.06);
+  --shadow-brand: 0 4px 20px rgba(99, 102, 241, 0.28);
+  --shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.2);
+
+  /* Radii */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* Layout */
+  --sidebar-width: 302px;
+  --topbar-height: 60px;
+
+  /* Sidebar nav density — compacted below by a max-height media query so a
+     13-14" laptop viewport (shorter than this dev machine's) needs less
+     scrolling to reach the bottom of the nav list. */
+  --sidebar-item-py: 0.5rem; /* py-2 */
+  --sidebar-item-font: 14px;
+  --sidebar-item-gap: 0.625rem; /* gap-2.5 */
+  --sidebar-group-mb: 1rem; /* mb-4 */
+  --sidebar-child-py: 0.375rem; /* py-1.5 */
+  --sidebar-child-font: 13px;
+}
+
+/* Shorter viewports (13-14" laptops are commonly ~800-870px tall in CSS px
+   once OS display scaling is applied, vs. ~950-1100px on a 16" panel) get a
+   denser sidebar so the nav list needs less internal scrolling to reach
+   lower items. */
+@media (max-height: 820px) {
+  :root {
+    --sidebar-item-py: 0.375rem;
+    --sidebar-item-font: 13px;
+    --sidebar-item-gap: 0.5rem;
+    --sidebar-group-mb: 0.625rem;
+    --sidebar-child-py: 0.25rem;
+    --sidebar-child-font: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+═══════════════════════════════════════════════════════ */
+.dark {
+  --surface: #070b14;
+  --surface-card: #0f172a;
+  --surface-raised: #1a2539;
+  --surface-overlay: rgba(15, 23, 42, 0.97);
+
+  --border: #1e2d45;
+  --border-subtle: #141e2d;
+  --border-strong: #2d3f5a;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-placeholder: #334155;
+
+  --success-bg: #052e16;
+  --success-border: #14532d;
+  --success-text: #4ade80;
+
+  --warning-bg: #1c1208;
+  --warning-border: #451a03;
+  --warning-text: #fbbf24;
+
+  --danger-bg: #1c0606;
+  --danger-border: #450a0a;
+  --danger-text: #f87171;
+
+  --info-bg: #0c1628;
+  --info-border: #1e3a5f;
+  --info-text: #60a5fa;
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm:
+    0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md:
+    0 4px 8px -2px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg:
+    0 12px 24px -4px rgba(0, 0, 0, 0.7), 0 4px 8px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl:
+    0 24px 48px -8px rgba(0, 0, 0, 0.8), 0 8px 16px -8px rgba(0, 0, 0, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════
+   THEME VARIANTS
+═══════════════════════════════════════════════════════ */
+.theme-light {
+  /* Light mode sidebar - light/white sidebar with dark text for readability */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e2e8f0;
+  --sidebar-text: #64748b;
+  --sidebar-text-hover: #334155;
+  --sidebar-text-active: #0f172a;
+  --sidebar-active-bg: #f1f5f9;
+  --sidebar-active-border: #6366f1;
+  --sidebar-hover-bg: #f8fafc;
+  --sidebar-section-text: #94a3b8;
+  --sidebar-logo-text: #0f172a;
+  --sidebar-logo-sub: #64748b;
+}
+
+.theme-dark-black {
+  --surface: #000000;
+  --surface-card: #0a0a0a;
+  --surface-raised: #141414;
+  --border: #1f1f1f;
+  --border-subtle: #1a1a1a;
+  --text-primary: #fafafa;
+  --text-secondary: #a8a8a8;
+  --text-muted: #6b7280;
+  --text-placeholder: #3a3a3a;
+  --sidebar-bg: #050505;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+  --sidebar-text: #6b7280;
+  --sidebar-text-hover: #a8a8a8;
+  --sidebar-text-active: #fafafa;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-active-border: #6b7280;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.03);
+  --sidebar-section-text: #4a4a4a;
+  --sidebar-logo-text: #fafafa;
+  --sidebar-logo-sub: #6b7280;
+}
+
+.theme-dark-blue {
+  --surface: #050d1e;
+  --surface-card: #091428;
+  --surface-raised: #102040;
+  --border: #172a48;
+  --border-subtle: #0c1a30;
+  --text-primary: #e2eaf9;
+  --text-secondary: #8899bb;
+  --text-muted: #607090;
+  --text-placeholder: #2a3a55;
+  --sidebar-bg: #020612;
+  --sidebar-border: rgba(100, 255, 218, 0.08);
+  --sidebar-text: #5a6e8a;
+  --sidebar-text-hover: #8899bb;
+  --sidebar-text-active: #e2eaf9;
+  --sidebar-active-bg: rgba(100, 255, 218, 0.1);
+  --sidebar-active-border: #64ffda;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.04);
+  --sidebar-section-text: #3a4e6a;
+  --sidebar-logo-text: #e2eaf9;
+  --sidebar-logo-sub: #5a6e8a;
+  --brand-500: #64ffda;
+  --brand-600: #00b4d8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BASE RESET & TYPOGRAPHY
+═══════════════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+  font-optical-sizing: auto;
+  background: var(--surface);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+code,
+pre,
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-feature-settings: 'liga' 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.01em;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCROLLBARS
+═══════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+.ui-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.ui-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.ui-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ui-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: var(--border);
+}
+
+/* ═══════════════════════════════════════════════════════
+   FOCUS
+═══════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TRANSITIONS — selective, not global
+═══════════════════════════════════════════════════════ */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    color 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.18s ease both;
+}
+.animate-fade-up {
+  animation: fadeUp 0.22s ease both;
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-slide-in-up {
+  animation: slideInUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-scale-in {
+  animation: scaleIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SKELETON
+═══════════════════════════════════════════════════════ */
+.skeleton,
+.ui-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--border-subtle) 25%,
+    var(--border) 50%,
+    var(--border-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ██████  UI COMPONENT LIBRARY  ██████
+═══════════════════════════════════════════════════════ */
+
+/* ── Cards ──
+   Padding lives in @layer components so Tailwind p-* utilities can override it.
+   Visual tokens (bg, border, shadow, radius) are unlayered for stable precedence.
+*/
+@layer components {
+  .ui-card {
+    padding: 20px;
+  }
+  .ui-card-flat {
+    padding: 16px;
+  }
+  .ui-card-elevated {
+    padding: 24px;
+  }
+  .ui-card-inset {
+    padding: 16px;
+  }
+}
+
+.ui-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-card-flat {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.ui-card-elevated {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-card-inset {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Buttons ── */
+.ui-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+}
+.ui-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.ui-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Primary */
+.ui-btn-primary {
+  background: var(--brand-600);
+  border-color: var(--brand-700);
+  color: #ffffff;
+  box-shadow:
+    var(--shadow-xs),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.ui-btn-primary:hover:not(:disabled) {
+  background: var(--brand-700);
+  border-color: var(--brand-800);
+  box-shadow: var(--shadow-sm), var(--shadow-brand);
+}
+.ui-btn-primary:active:not(:disabled) {
+  box-shadow: var(--shadow-xs);
+}
+
+/* Secondary */
+.ui-btn-secondary {
+  background: var(--surface-card);
+  border-color: var(--border);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-xs);
+}
+.ui-btn-secondary:hover:not(:disabled) {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+/* Ghost */
+.ui-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+.ui-btn-ghost:hover:not(:disabled) {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+/* Danger */
+.ui-btn-danger {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.ui-btn-danger:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+/* Size variants */
+.ui-btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+  gap: 4px;
+}
+.ui-btn-sm svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ui-btn-xs {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 0.6875rem;
+  border-radius: var(--radius-sm);
+  gap: 3px;
+}
+.ui-btn-xs svg {
+  width: 11px;
+  height: 11px;
+}
+
+.ui-btn-lg {
+  height: 42px;
+  padding: 0 20px;
+  font-size: 0.9375rem;
+  border-radius: var(--radius-lg);
+}
+
+/* Icon-only */
+.ui-btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+.ui-btn-icon.ui-btn-sm {
+  width: 28px;
+  height: 28px;
+}
+
+/* ── Inputs ──
+   Wrapped in @layer components so Tailwind injects it BEFORE the utilities
+   layer, regardless of where in this file it's written. Without this, these
+   plain rules sit textually after `@tailwind utilities` and win the cascade
+   over same-specificity utility classes (e.g. `pl-12`) applied alongside
+   `ui-input` on the same element — silently discarding the utility's padding
+   override (seen as a search icon overlapping the input's placeholder text). */
+@layer components {
+.ui-input {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 0 12px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.ui-input::placeholder {
+  color: var(--text-placeholder);
+}
+.ui-input:hover {
+  border-color: var(--border-strong);
+}
+.ui-input:focus {
+  border-color: var(--brand-500);
+  box-shadow: var(--shadow-focus);
+}
+.ui-input:disabled {
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* Textarea */
+.ui-textarea {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 12px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+.ui-textarea::placeholder {
+  color: var(--text-placeholder);
+}
+.ui-textarea:focus {
+  border-color: var(--brand-500);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Select */
+select.ui-input {
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+} /* end @layer components (Inputs/Textarea/Select) */
+
+/* Form label */
+.ui-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 5px;
+}
+
+/* ── Badges ── */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.ui-badge-brand {
+  background: var(--brand-50);
+  border-color: var(--brand-200);
+  color: var(--brand-700);
+}
+.dark .ui-badge-brand {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: var(--brand-400);
+}
+
+.ui-badge-success {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-text);
+}
+.ui-badge-warning {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--warning-text);
+}
+.ui-badge-danger {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+.ui-badge-info {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
+}
+.ui-badge-neutral {
+  background: var(--surface-raised);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+/* ── Section labels ── */
+.ui-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Dividers ── */
+.ui-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+
+/* ── Tables ── */
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.ui-th {
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ui-td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.ui-tr {
+  transition: background 100ms ease;
+}
+.ui-tr:hover {
+  background: var(--surface-raised);
+}
+.ui-tr-selected {
+  background: rgba(99, 102, 241, 0.06) !important;
+}
+.ui-tr-selected:hover {
+  background: rgba(99, 102, 241, 0.1) !important;
+}
+
+/* ── Empty states ── */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.ui-empty-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.ui-empty-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+.ui-empty-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+  max-width: 280px;
+}
+
+/* ── Error state (ErrorState.tsx) ──
+   Same shape as .ui-empty above (a query failed instead of "nothing here
+   yet"), but on the --danger palette so it reads as a problem, not an empty
+   list — and unlike the ad hoc banners it replaces, every color reference
+   here goes through the theme tokens so it stays correct in light/dark/every
+   theme variant instead of a hardcoded red or rose Tailwind class. */
+.ui-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.ui-error-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: var(--danger-bg);
+  margin-bottom: 12px;
+}
+.ui-error-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--danger);
+}
+.ui-error-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+.ui-error-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  max-width: 360px;
+}
+.ui-error-ref {
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  margin: 0 0 16px;
+}
+/* Compact inline variant — a single row (icon + message [+ retry]) for a
+   spot that already has its own heading/context and doesn't need the full
+   centered card (e.g. a section within a page that has other content). */
+.ui-error-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+}
+.ui-error-inline-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--danger);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ui-error-inline-text {
+  font-size: 0.8125rem;
+  color: var(--danger-text);
+  line-height: 1.4;
+}
+/* Per-field validation message, shown directly under an input. */
+.ui-field-error {
+  font-size: 0.75rem;
+  color: var(--danger);
+  margin: 4px 0 0;
+}
+
+/* ── Stats / metric cards ── */
+.ui-metric {
+  padding: 20px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+}
+.ui-metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ui-metric-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.ui-metric-delta-up {
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.ui-metric-delta-down {
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Tabs ── */
+.ui-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+  overflow-x: auto;
+}
+.ui-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 12px;
+  margin-right: 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease;
+}
+.ui-tab:hover {
+  color: var(--text-primary);
+}
+.ui-tab-active {
+  color: var(--brand-600);
+  border-bottom-color: var(--brand-600);
+}
+.dark .ui-tab-active {
+  color: var(--brand-400);
+  border-bottom-color: var(--brand-400);
+}
+
+/* ── Utility ── */
+.ui-focus-ring:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* Numeric tabular */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Page layout helpers ── */
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 28px;
+  animation: fadeUp 0.22s ease both;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ── TopBar breadcrumb ── */
+.topbar-breadcrumb-link {
+  color: var(--text-muted);
+}
+.topbar-breadcrumb-link:hover {
+  color: var(--text-primary);
+}
+
+/* ── TopBar — pure CSS hover (no JS inline style mutations) ── */
+.topbar-user-trigger {
+  border: 1px solid transparent;
+  background: transparent;
+}
+.topbar-user-trigger:hover {
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+.topbar-menu-item {
+  color: var(--text-primary);
+  background: transparent;
+}
+.topbar-menu-item:hover {
+  background: var(--surface-raised);
+}
+.topbar-signout-item {
+  color: var(--danger);
+  background: transparent;
+}
+.topbar-signout-item:hover {
+  background: var(--danger-bg);
+}
+
+/* ── Sidebar nav items — pure CSS hover (no JS inline style mutations) ── */
+.sidebar-nav-item {
+  color: var(--sidebar-text);
+  background: transparent;
+}
+.sidebar-nav-item:hover {
+  color: var(--sidebar-text-hover);
+  background: var(--sidebar-hover-bg);
+}
+.sidebar-nav-item--active,
+.sidebar-nav-item[aria-current='page'] {
+  color: var(--sidebar-text-active);
+  background: var(--sidebar-active-bg);
+}
+.sidebar-nav-item--active:hover,
+.sidebar-nav-item[aria-current='page']:hover {
+  background: var(--sidebar-active-bg);
+}
+.sidebar-signout-btn {
+  color: var(--sidebar-text);
+  background: transparent;
+}
+.sidebar-signout-btn:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ── Hero / page-header card ── */
+.ui-hero {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+/* ── Table rows (alias for .ui-tr) ── */
+.ui-table-row {
+  transition: background 100ms ease;
+}
+.ui-table-row:hover {
+  background: var(--surface-raised);
+}
+
+/* ── Letter Body editor (LetterBodyEditor / LetterBodyView) ──
+   Mirrors letterBodyPdfRenderer.ts's own visual choices (border color,
+   header shading, blockquote bar) closely enough that what an author sees
+   while composing resembles the final PDF, without literally being it.
+   Base size/line-height are in the SAME units and values the renderer uses
+   (DEFAULT_SIZE = 11pt, default lineSpacing = 1.3) — this used to be 14px
+   (≈10.5pt, close but not exact) / 1.6 (23% taller than the PDF's actual line
+   spacing), which was one of several small compounding reasons a document
+   wrapped/paginated visibly differently on screen than in the rendered PDF. */
+.letter-body-prosemirror,
+.letter-body-readonly .ProseMirror {
+  padding: 12px 14px;
+  min-height: 240px;
+  outline: none;
+  font-size: 11pt;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.letter-body-readonly .ProseMirror {
+  min-height: 0;
+}
+.letter-body-prosemirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+.letter-body-prosemirror table,
+.letter-body-readonly table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+.letter-body-prosemirror td,
+.letter-body-prosemirror th,
+.letter-body-readonly td,
+.letter-body-readonly th {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  vertical-align: top;
+  position: relative;
+}
+.letter-body-prosemirror th,
+.letter-body-readonly th {
+  background: var(--surface-raised);
+  font-weight: 600;
+  text-align: left;
+}
+.letter-body-prosemirror blockquote,
+.letter-body-readonly blockquote {
+  border-left: 3px solid var(--border-strong, #c7c7d1);
+  margin: 8px 0;
+  padding-left: 12px;
+  color: var(--text-secondary);
+}
+.letter-body-prosemirror hr,
+.letter-body-readonly hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+/* Tailwind's preflight (`@tailwind base`) zeroes `list-style`/margin/padding
+   on every `ol`/`ul` globally, so a bulletList/orderedList node — a real,
+   backend-supported node type the toolbar's list buttons produce — showed no
+   marker at all while composing, even though letterBodyPdfRenderer.ts draws
+   its own bullet/number glyphs independently of any CSS and always rendered
+   them correctly. That made the editor and the live PDF preview visibly
+   disagree on content neither side actually treated differently. Indent
+   (18pt per level) matches drawList()'s own `indentPt = 18 * (depth + 1)`. */
+.letter-body-prosemirror ol,
+.letter-body-readonly ol {
+  list-style: decimal;
+  padding-left: 18pt;
+  margin: 4px 0;
+}
+.letter-body-prosemirror ul,
+.letter-body-readonly ul {
+  list-style: disc;
+  padding-left: 18pt;
+  margin: 4px 0;
+}
+.letter-body-prosemirror ol ol,
+.letter-body-prosemirror ul ul,
+.letter-body-readonly ol ol,
+.letter-body-readonly ul ul {
+  list-style-type: lower-alpha;
+}
+.letter-body-prosemirror li,
+.letter-body-readonly li {
+  margin: 2px 0;
+}
+.letter-body-prosemirror li p,
+.letter-body-readonly li p {
+  margin: 0;
+}
+.letter-body-page-break {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.letter-body-page-break::before,
+.letter-body-page-break::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--border);
+}
+.letter-body-prosemirror .selectedCell {
+  background: rgba(99, 102, 241, 0.08);
+}

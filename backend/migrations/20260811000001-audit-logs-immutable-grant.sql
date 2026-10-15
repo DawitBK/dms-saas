@@ -1,0 +1,22 @@
+-- AUDIT-FINDINGS-2026-07-26.md #3: audit-log immutability had no DB-level
+-- backstop. 20260703000008-rls-app-role.sql granted edams_app blanket
+-- SELECT/INSERT/UPDATE/DELETE on "ALL TABLES IN SCHEMA public" (line 71) —
+-- that includes audit_logs, so the baseline migration's own
+-- `REVOKE UPDATE, DELETE ON audit_logs FROM PUBLIC` (20260610000000, line
+-- 386) does nothing for edams_app specifically: it has its own explicit
+-- grant that coexists with the PUBLIC revoke.
+--
+-- The AuditLog Sequelize model's beforeUpdate/beforeDestroy/beforeBulkUpdate/
+-- beforeBulkDestroy hooks are application-layer only. Any raw
+-- sequelize.query() (used elsewhere in this codebase for advisory locks and
+-- sequence reads) or a future bug bypasses the Model layer entirely and
+-- could tamper with or delete the tail of a tenant's hash chain —
+-- undetectable by verifyAuditChain() since the next writer just continues
+-- the chain from the new "last row."
+--
+-- Narrowing edams_app's grant on audit_logs to SELECT, INSERT only makes
+-- immutability a DB-level guarantee that no application code path — buggy,
+-- malicious, or otherwise — can override, matching the "app can never
+-- update/delete" invariant the model hooks already assume.
+REVOKE UPDATE, DELETE ON audit_logs FROM edams_app;
+GRANT SELECT, INSERT ON audit_logs TO edams_app;

@@ -1,0 +1,612 @@
+<title>DMS Forms — User Guide</title>
+<style>
+  :root {
+    --paper: #f6f5f1;
+    --paper-raised: #ffffff;
+    --ink: #20242b;
+    --ink-soft: #565f6d;
+    --ink-faint: #8b9099;
+    --accent: #2952cc;
+    --accent-ink: #1d3a94;
+    --accent-soft: #e4e9fb;
+    --warn: #9a5b0a;
+    --warn-soft: #fbeed9;
+    --warn-border: #e8c98c;
+    --good: #1f7a4d;
+    --good-soft: #e2f3ea;
+    --good-border: #a9d9c1;
+    --rule: #dcd9d0;
+    --rule-strong: #c3bfb2;
+    --code-bg: #ecebe4;
+    --shadow: 0 1px 2px rgba(32,36,43,.04), 0 8px 24px -12px rgba(32,36,43,.12);
+    --sans: -apple-system, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+  }
+  :root[data-theme="dark"] {
+    --paper: #14161b;
+    --paper-raised: #1b1e25;
+    --ink: #e9e7e0;
+    --ink-soft: #a2a6ad;
+    --ink-faint: #6b6f77;
+    --accent: #7f9bff;
+    --accent-ink: #b7c6ff;
+    --accent-soft: #1c2540;
+    --warn: #e0a339;
+    --warn-soft: #3a2c12;
+    --warn-border: #6b4d1a;
+    --good: #4ada93;
+    --good-soft: #12301f;
+    --good-border: #235c3c;
+    --rule: #2a2d34;
+    --rule-strong: #383c45;
+    --code-bg: #21242b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14161b;
+      --paper-raised: #1b1e25;
+      --ink: #e9e7e0;
+      --ink-soft: #a2a6ad;
+      --ink-faint: #6b6f77;
+      --accent: #7f9bff;
+      --accent-ink: #b7c6ff;
+      --accent-soft: #1c2540;
+      --warn: #e0a339;
+      --warn-soft: #3a2c12;
+      --warn-border: #6b4d1a;
+      --good: #4ada93;
+      --good-soft: #12301f;
+      --good-border: #235c3c;
+      --rule: #2a2d34;
+      --rule-strong: #383c45;
+      --code-bg: #21242b;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+  a:hover { border-bottom-color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 56px;
+  }
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; gap: 0; }
+    .toc { display: none; }
+  }
+
+  /* ---- masthead ---- */
+  .masthead {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 44px 24px 32px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1.doctitle {
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    font-weight: 700;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  .dek {
+    color: var(--ink-soft);
+    font-size: 17px;
+    max-width: 56ch;
+    margin: 0;
+  }
+  .meta-row {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  .meta-row span { display: inline-flex; align-items: center; gap: 6px; }
+  .meta-row b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---- toc ---- */
+  .toc {
+    position: sticky;
+    top: 32px;
+    align-self: start;
+    padding-top: 48px;
+    font-size: 13.5px;
+  }
+  .toc-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  .toc li { counter-increment: toc; margin-bottom: 2px; }
+  .toc a {
+    display: block;
+    border-bottom: none;
+    color: var(--ink-soft);
+    padding: 6px 0 6px 24px;
+    position: relative;
+    border-left: 2px solid transparent;
+    margin-left: -1px;
+  }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    position: absolute;
+    left: 0;
+    top: 7px;
+  }
+  .toc a:hover { color: var(--ink); border-left-color: var(--rule-strong); }
+  .toc-sub { margin: 2px 0 8px 24px; padding: 0; list-style: none; }
+  .toc-sub a { padding: 3px 0; font-size: 12.5px; color: var(--ink-faint); }
+  .toc-sub a::before { content: "·"; font-family: var(--sans); }
+  .toc-sub a:hover { color: var(--ink-soft); }
+
+  /* ---- main content ---- */
+  main { padding: 48px 0 100px; min-width: 0; }
+  section.chapter { margin-bottom: 64px; scroll-margin-top: 24px; }
+  section.chapter:last-child { margin-bottom: 0; }
+
+  .chapter-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .chapter-num {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 2px 7px;
+  }
+  h2 {
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    margin: 0;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .chapter-dek { color: var(--ink-soft); margin: 8px 0 28px; max-width: 68ch; font-size: 15.5px; }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    letter-spacing: -0.003em;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p.lead { font-size: 16.5px; }
+  ul, ol.steps { margin: 0 0 16px; padding-left: 0; max-width: 68ch; }
+  ul { padding-left: 20px; }
+  ul li { margin-bottom: 6px; }
+
+  /* ---- numbered step list (genuinely sequential walkthroughs) ---- */
+  ol.steps { list-style: none; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding: 14px 0 14px 44px;
+    border-top: 1px solid var(--rule);
+  }
+  ol.steps > li:first-child { border-top: none; padding-top: 4px; }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 15px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  ol.steps > li:first-child::before { top: 4px; }
+  ol.steps > li strong.step-title { display: block; margin-bottom: 4px; font-size: 15.5px; }
+
+  /* ---- ui element tags ---- */
+  kbd.ui {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13.5px;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    padding: 1px 7px;
+    box-shadow: var(--shadow);
+    color: var(--ink);
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1.5px 5px;
+  }
+
+  /* ---- callouts ---- */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 16px 14px 16px;
+    margin: 18px 0 20px;
+    max-width: 68ch;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow);
+  }
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .callout-label .glyph { font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.tip { border-left: 3px solid var(--accent); }
+  .callout.tip .callout-label { color: var(--accent-ink); }
+  .callout.warn { border-left: 3px solid var(--warn); background: var(--warn-soft); border-color: var(--warn-border); }
+  .callout.warn .callout-label { color: var(--warn); }
+  .callout.fixed { border-left: 3px solid var(--good); background: var(--good-soft); border-color: var(--good-border); }
+  .callout.fixed .callout-label { color: var(--good); }
+
+  /* ---- field type reference table ---- */
+  .table-wrap { overflow-x: auto; margin: 18px 0 24px; border: 1px solid var(--rule); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule-strong);
+    background: var(--paper-raised);
+  }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); white-space: nowrap; }
+  tbody td.note { color: var(--ink-soft); }
+
+  /* ---- status pill legend ---- */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+  .pill.draft { background: var(--code-bg); color: var(--ink-soft); }
+  .pill.draft::before { background: var(--ink-faint); }
+  .pill.pending { background: var(--warn-soft); color: var(--warn); }
+  .pill.pending::before { background: var(--warn); }
+  .pill.active { background: var(--good-soft); color: var(--good); }
+  .pill.active::before { background: var(--good); }
+  .pill.deprecated { background: var(--code-bg); color: var(--ink-faint); }
+  .pill.deprecated::before { background: var(--ink-faint); }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 16px 0 22px; align-items: center; }
+  .flow-arrow { color: var(--ink-faint); font-family: var(--mono); }
+
+  /* ---- nav path breadcrumb ---- */
+  .path {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .path .seg { color: var(--ink-faint); }
+  .path .seg.here { color: var(--accent-ink); font-weight: 600; }
+
+  /* ---- two-col grid for compact facts ---- */
+  .fact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 12px;
+    margin: 18px 0 22px;
+    max-width: 68ch;
+  }
+  @media (max-width: 560px) { .fact-grid { grid-template-columns: 1fr; } }
+  .fact {
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: var(--paper-raised);
+  }
+  .fact .k { font-family: var(--mono); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+  .fact .v { font-size: 14px; color: var(--ink); }
+
+  hr.rule { border: none; border-top: 1px solid var(--rule); margin: 40px 0; }
+
+  footer.end {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+    border-top: 1px solid var(--rule);
+  }
+</style>
+
+<div class="masthead">
+  <div class="eyebrow"><span class="dot"></span>DMS · Field Guide</div>
+  <h1 class="doctitle">Working with Forms</h1>
+  <p class="dek">How to design a template, publish it, fill it out, and track what happens after — including what changed under the hood so PDFs stop failing to generate.</p>
+  <div class="meta-row">
+    <span><b>Module</b> Document Management System</span>
+    <span><b>Audience</b> Template authors &amp; anyone filling out a form</span>
+    <span><b>Updated</b> 28 Jul 2026</span>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-label">Contents</div>
+    <ol>
+      <li><a href="#orientation">Where things live</a></li>
+      <li><a href="#concepts">Templates vs. instances</a></li>
+      <li><a href="#building">Building a template</a>
+        <ol class="toc-sub">
+          <li><a href="#base-file">Starting from a PDF, image, or blank page</a></li>
+          <li><a href="#field-types">Field types</a></li>
+          <li><a href="#logic">Sections &amp; conditional fields</a></li>
+          <li><a href="#preview">Reading the live preview</a></li>
+        </ol>
+      </li>
+      <li><a href="#publishing">Publishing a template</a></li>
+      <li><a href="#filling">Filling out a form</a></li>
+      <li><a href="#tracking">Tracking your submissions</a></li>
+      <li><a href="#fixes">What was fixed</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="chapter" id="orientation">
+      <div class="chapter-head"><span class="chapter-num">01</span><h2>Where things live</h2></div>
+      <p class="chapter-dek">Forms has three screens, all under one sidebar dropdown. Which one you want depends on whether you're designing a form or filling one out.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Screen</th><th>URL</th><th>Who it's for</th></tr></thead>
+          <tbody>
+            <tr><td>Templates</td><td class="note"><code>/dashboard/forms/templates</code></td><td class="note">Designing, publishing, and retiring form templates. Requires template-management permission.</td></tr>
+            <tr><td>Fill a Form</td><td class="note"><code>/dashboard/forms/fill</code></td><td class="note">Anyone who needs to fill out a published form and generate a PDF from it.</td></tr>
+            <tr><td>My Submissions</td><td class="note"><code>/dashboard/forms/submissions</code></td><td class="note">Everyone — tracks forms you've personally filled out and their approval status.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-label"><span class="glyph">→</span>Old link still works</div>
+        <p>If you had <code>/dashboard/forms</code> bookmarked, it now redirects straight to Templates — nothing to update.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="concepts">
+      <div class="chapter-head"><span class="chapter-num">02</span><h2>Templates vs. instances</h2></div>
+      <p class="chapter-dek">Two different things share the word "form," and mixing them up is the most common source of confusion.</p>
+
+      <div class="fact-grid">
+        <div class="fact"><div class="k">Template</div><div class="v">The reusable blueprint — its fields, layout, and rules. Designed once on the Templates screen, then reused every time someone fills it out.</div></div>
+        <div class="fact"><div class="k">Instance</div><div class="v">One filled-out copy of a template. Created on the Fill a Form screen. Every instance becomes a real, filed PDF document in the DMS repository.</div></div>
+      </div>
+
+      <p>A template only produces instances once it's <strong>Active</strong> — see <a href="#publishing">Publishing a template</a> for the draft → active lifecycle.</p>
+    </section>
+
+    <section class="chapter" id="building">
+      <div class="chapter-head"><span class="chapter-num">03</span><h2>Building a template</h2></div>
+      <p class="chapter-dek">On the Templates screen, <kbd class="ui">New template</kbd> opens the builder. Everything here is saved as a draft first — nothing is publicly usable until you publish it.</p>
+
+      <ol class="steps">
+        <li>
+          <strong class="step-title">Name it and add fields</strong>
+          <p>Give the template a name and, optionally, a category (a free-text label for grouping — e.g. "HR" or "Procurement"). Then use <kbd class="ui">Add field</kbd> to build out the fields your form needs, one row per field.</p>
+        </li>
+        <li>
+          <strong class="step-title">Decide what the form is laid over</strong>
+          <p>See <a href="#base-file">Starting from a PDF, image, or blank page</a> below — you can overlay fields on an existing document, or generate a clean page from scratch.</p>
+        </li>
+        <li>
+          <strong class="step-title">Group fields into sections (optional)</strong>
+          <p>Use <kbd class="ui">Add section</kbd> to create labeled groups (e.g. "Applicant details", "Manager approval"). Assign each field to a section from its row's section dropdown. Fields with no section render under a plain "General" heading.</p>
+        </li>
+        <li>
+          <strong class="step-title">Add validation and conditional logic (optional)</strong>
+          <p>See <a href="#logic">Sections &amp; conditional fields</a> — most fields support extra rules beyond just "required."</p>
+        </li>
+        <li>
+          <strong class="step-title">Decide whether filled-out copies need approval</strong>
+          <p>The <strong>"Filled instances require approval (chain)"</strong> checkbox at the bottom controls what happens the moment someone submits a filled-out copy. Leave it off and a filled form files immediately. Turn it on and every submission is automatically routed through the approval engine before it's considered final — useful for anything that needs a manager's sign-off (leave requests, expense claims, procurement forms).</p>
+        </li>
+        <li>
+          <strong class="step-title">Check the live preview, then create</strong>
+          <p>The panel on the right (see <a href="#preview">Reading the live preview</a>) shows the actual PDF that will be generated. Once it looks right, <kbd class="ui">Create template</kbd> saves it as a <span class="pill draft">draft</span>.</p>
+        </li>
+      </ol>
+
+      <h3 id="base-file">Starting from a PDF, image, or blank page</h3>
+      <p>The <strong>Base file</strong> panel is optional. Skip it and your fields lay out on a clean, generated A4 page. Upload a file and your fields overlay on top of it instead — handy for pre-printed letterhead, an official government form, or a scanned document you need to annotate.</p>
+      <p>Accepted formats: <code>.pdf</code>, <code>.png</code>, <code>.jpeg</code>/<code>.jpg</code>. An uploaded image is automatically wrapped into a one-page PDF behind the scenes — you don't need to convert anything yourself first.</p>
+      <div class="callout warn">
+        <div class="callout-label"><span class="glyph">!</span>Word documents aren't supported</div>
+        <p>Uploading a <code>.doc</code>/<code>.docx</code> file will be rejected with a message asking you to export it to PDF first (or upload a PNG/JPEG of it). Converting Office documents automatically isn't supported yet.</p>
+      </div>
+
+      <h3 id="field-types">Field types</h3>
+      <p>Every field row has a type dropdown. This determines what input the person filling out the form sees — not how it's drawn in the final PDF, which is always rendered as formatted text regardless of type (see <a href="#fixes">What was fixed</a> for why that's the right call).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Fill-out input</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>text</td><td class="note">Single-line text box</td><td class="note">Supports min/max length and a regex pattern under Validation.</td></tr>
+            <tr><td>textarea</td><td class="note">Multi-line text box</td><td class="note">"Long text" in the type dropdown. Same length/pattern validation as text.</td></tr>
+            <tr><td>date</td><td class="note">Date picker</td><td class="note">Printed on the PDF exactly as entered.</td></tr>
+            <tr><td>number</td><td class="note">Numeric input</td><td class="note">Supports min/max value under Validation.</td></tr>
+            <tr><td>checkbox</td><td class="note">Toggle</td><td class="note">Prints as "Yes" / "No" on the generated PDF.</td></tr>
+            <tr><td>select</td><td class="note">Dropdown</td><td class="note">"Dropdown" in the type dropdown. Define choices below the type row.</td></tr>
+            <tr><td>radio</td><td class="note">Radio buttons</td><td class="note">Same choices list as select, rendered as separate options.</td></tr>
+            <tr><td>email</td><td class="note">Text box, validated as an email</td><td class="note">&nbsp;</td></tr>
+            <tr><td>file</td><td class="note">File picker</td><td class="note">"File upload" in the type dropdown. The uploaded file is filed as its own separate document; the generated PDF just prints <code>(attached: filename)</code> where the field sits.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="logic">Sections &amp; conditional fields</h3>
+      <p>Each field row has a <strong>"Show this field only if"</strong> control. Click <kbd class="ui">Add condition</kbd> to make a field appear only when another field's value equals, doesn't equal, or contains something you specify — for example, showing a "Reason for rejection" field only when a "Decision" dropdown is set to "Rejected." Hidden fields aren't required even if marked required, and this same rule is enforced again on the server when the form is submitted, so it can't be bypassed by editing the page.</p>
+
+      <h3 id="preview">Reading the live preview</h3>
+      <p class="lead">The panel on the right of the builder isn't a mockup — it <em>is</em> the PDF.</p>
+      <p>Every time you add or edit a field, the builder asks the server to render the exact same PDF pipeline used for real submissions, filled with placeholder sample values, and shows the result in the preview pane a half-second later. If the layout, spacing, or base-file background looks off in the preview, that's exactly how the real generated document will look too — so it's worth fixing here rather than discovering it after someone's filled the form out for real.</p>
+    </section>
+
+    <section class="chapter" id="publishing">
+      <div class="chapter-head"><span class="chapter-num">04</span><h2>Publishing a template</h2></div>
+      <p class="chapter-dek">A new template starts as a draft and isn't available on the Fill a Form screen until it's Active.</p>
+
+      <div class="pill-row">
+        <span class="pill draft">Draft</span><span class="flow-arrow">→</span>
+        <span class="pill pending">Pending approval</span><span class="flow-arrow">→</span>
+        <span class="pill active">Active</span><span class="flow-arrow">→</span>
+        <span class="pill deprecated">Deprecated</span>
+      </div>
+
+      <ul>
+        <li><strong>Draft</strong> — editable, invisible to everyone except template managers. Not yet on the Fill a Form list.</li>
+        <li><strong>Submit for approval</strong> — from a draft's row, this sends it through the same approval engine used elsewhere in DMS. Expand <kbd class="ui">Approval status</kbd> on its row to see where it sits in the chain.</li>
+        <li><strong>Active</strong> — the chain approved it. It now appears on the Fill a Form screen and can be filled out.</li>
+        <li><strong>New version</strong> — available once a template is Active or Deprecated. Clones it into a fresh draft you can edit and resubmit, without touching the published version everyone's currently using.</li>
+        <li><strong>Deprecate</strong> — removes an Active template from the Fill a Form list without deleting its history. Existing filed instances are unaffected.</li>
+      </ul>
+
+      <div class="callout tip">
+        <div class="callout-label"><span class="glyph">→</span>Filtering the list</div>
+        <p>The status pills across the top of the Templates screen (All / Draft / Pending approval / Active / Deprecated) filter the list — useful once you have more than a handful of templates.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="filling">
+      <div class="chapter-head"><span class="chapter-num">05</span><h2>Filling out a form</h2></div>
+      <p class="chapter-dek">On the Fill a Form screen, every card is an Active template. Click one to open it.</p>
+
+      <ol class="steps">
+        <li><strong class="step-title">Pick a template</strong><p>Only Active templates are listed. If the one you need is missing, it's likely still in draft or pending approval — ask whoever manages templates.</p></li>
+        <li><strong class="step-title">Fill in the fields</strong><p>Required fields are marked; conditionally-hidden fields only appear once their trigger condition is met. For a "file upload" field, attach the actual file here — it's filed as its own document alongside the generated form.</p></li>
+        <li><strong class="step-title">Choose a department (if asked)</strong><p>This determines which department the generated document is filed under in the DMS repository.</p></li>
+        <li><strong class="step-title">Submit</strong><p>This generates the real PDF and files it as a document. If the template requires chain approval, you'll see a note that it's now routed for approval rather than immediately final. Either way, you're taken straight to the new document's page, where the generated PDF is ready to preview.</p></li>
+      </ol>
+    </section>
+
+    <section class="chapter" id="tracking">
+      <div class="chapter-head"><span class="chapter-num">06</span><h2>Tracking your submissions</h2></div>
+      <p class="chapter-dek">My Submissions lists every form <em>you</em> have personally filled out, most recent first, with its approval progress if it has any.</p>
+      <p>This is a personal list, not a management view — it only shows instances you created. Expand an entry to see its approval chain the same way you would on a template pending approval.</p>
+    </section>
+
+    <section class="chapter" id="fixes">
+      <div class="chapter-head"><span class="chapter-num">07</span><h2>What was fixed</h2></div>
+      <p class="chapter-dek">If PDF generation used to fail on you — on both uploaded-PDF templates and fully manual ones — here's what was actually wrong and why it's resolved now.</p>
+
+      <div class="callout fixed">
+        <div class="callout-label"><span class="glyph">✓</span>Root cause</div>
+        <p>The PDF-rendering engine only ships one guaranteed renderer out of the box — plain text. Fields typed as date, number, checkbox, or long text were being handed to renderers that no longer existed in the installed version, so generation threw an error before producing anything, on <em>every</em> template regardless of whether it was built on an uploaded PDF or from scratch.</p>
+      </div>
+      <div class="callout fixed">
+        <div class="callout-label"><span class="glyph">✓</span>The fix</div>
+        <p>Every field now renders through that one reliable text renderer, formatted appropriately for its type (checkboxes print as "Yes"/"No", numbers and dates print as their entered value). Nothing about how you build a template changed — this was purely a rendering-pipeline fix, verified against a template containing one field of every type.</p>
+      </div>
+      <div class="callout fixed">
+        <div class="callout-label"><span class="glyph">✓</span>Preview now matches reality</div>
+        <p>The old preview was a rough HTML approximation that didn't reflect real spacing or the base file background. It's since been replaced with the actual generated PDF, rendered with sample data — see <a href="#preview">Reading the live preview</a>.</p>
+      </div>
+      <div class="callout fixed">
+        <div class="callout-label"><span class="glyph">✓</span>Base files beyond PDF</div>
+        <p>Base-file upload previously rejected anything that wasn't a PDF outright. PNG and JPEG are now accepted too, wrapped into a PDF automatically — see <a href="#base-file">Starting from a PDF, image, or blank page</a>.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="troubleshooting">
+      <div class="chapter-head"><span class="chapter-num">08</span><h2>Troubleshooting</h2></div>
+
+      <h3>"Failed to generate form PDF" when filling out a form</h3>
+      <p>This was the bug described above and should no longer occur. If you still see it, it's a new issue, not the old one — check whether a <strong>required field with a conditional ("show only if") rule</strong> is hidden but still marked required with no value; that specific combination can still trip up generation and is worth reporting.</p>
+
+      <h3>My new template doesn't show up on Fill a Form</h3>
+      <p>Only <span class="pill active">Active</span> templates appear there. Check its status on the Templates screen — it's likely still a draft or waiting on its approval chain.</p>
+
+      <h3>The base file I want to use is a Word document</h3>
+      <p>Export it to PDF first (any word processor can do this from its Print/Export menu), or take a screenshot/scan as a PNG or JPEG — both are accepted directly.</p>
+
+      <h3>The live preview looks broken or won't load</h3>
+      <p>It briefly shows "Rendering…" after every edit — that's expected, it's regenerating the real PDF. If it shows a persistent error message instead, the schema it's trying to render has a problem (most often a required field hidden by a condition, per above); the error text names what failed.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="end">
+  DMS Field Guide — Forms · This page documents the Templates, Fill a Form, and My Submissions screens under the sidebar's Forms section.
+</footer>

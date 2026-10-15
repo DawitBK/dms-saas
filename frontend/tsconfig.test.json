@@ -1,0 +1,11 @@
+{
+  // Typechecks the vitest suite, which tsconfig.json deliberately excludes so
+  // a production (`--omit=dev`) `next build` can't fail on devDependency-only
+  // imports. Run with: npm run typecheck:test
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["tests/**/*.ts", "tests/**/*.tsx", "**/*.test.ts", "**/*.test.tsx", "vitest.config.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,452 @@
+# DMS — production Docker Compose stack.
+#
+# Usage (see Documentations/DEPLOY-COMPOSE.md for the full runbook):
+#   cp .env.prod.example .env.prod        # then fill in every secret
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+#
+# Design:
+#   - NO secrets in this file — everything comes from .env.prod (gitignored).
+#   - This server hosts GMS/DMS/SSO/MRS behind ONE shared Apache reverse proxy
+#     (see /DEPLOYMENT-GUIDE.md), which owns 80/443 and does path routing
+#     (/gms, /dms, /sso, /mrs). Caddy is therefore dropped from this compose
+#     file entirely — backend/frontend publish to 127.0.0.1 only, and Apache
+#     proxies /dms -> 127.0.0.1:7101, /dms/api/v1 -> 127.0.0.1:7100/api/v1.
+#     Postgres, Redis, MinIO, Meilisearch, ClamAV, and Prometheus stay
+#     internal-network-only either way.
+#   - `migrate` is a one-shot: it runs `node dist/scripts/migrate.js up` as the
+#     postgres superuser (DDL/RLS-policy ownership) and must complete before
+#     the API/worker start. The API and worker connect as the least-privilege
+#     `edams_app` role (created by deploy/postgres-init on first boot) so RLS
+#     is actually enforced.
+#   - `db-backup` produces nightly pg_dump archives into the backups volume
+#     (mirror it off-server — see Documentations/DR-RUNBOOK.md).
+#   - Perf audit 2026-08-13: no service here had a CPU/memory limit, and
+#     postgres ran on stock `postgres:16-alpine` defaults (shared_buffers
+#     ~128MB) despite sharing this one server with GMS/SSO/MRS. `deploy.
+#     resources.limits` below are STARTING-POINT values sized for a modest
+#     single-server deployment, not measured against this host's actual
+#     RAM/CPU — re-tune once you know real headroom. They're honored by a
+#     plain `docker compose up` in Compose V2 (no Swarm needed), which is
+#     the tooling this repo's runbook already uses.
+#     clamav's 2G is not a tuning guess — clamd's own virus-signature DB
+#     needs ~1-2GB resident just to start; under-provisioning it causes an
+#     OOM-kill crash loop, not a slow scan.
+#     redis gets a container memory cap but deliberately NOT `maxmemory`/
+#     `maxmemory-policy` — this one Redis instance backs BOTH the ACL/role
+#     caches (safe to evict) AND BullMQ's job queue (evicting queued jobs
+#     under memory pressure is silent data loss, not a cache miss). Capping
+#     eviction behavior needs the cache and queue workloads split onto
+#     separate Redis logical setups first; doing it blindly here would trade
+#     an OOM risk for a correctness risk.
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  TZ: UTC
+  PORT: "7100"
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: ${DB_NAME:-dmsprod}
+  DB_USER: edams_app
+  DB_PASSWORD: ${EDAMS_APP_DB_PASSWORD:?set in .env.prod}
+  REDIS_URL: redis://redis:6379
+  STORAGE_DRIVER: minio
+  MINIO_ENDPOINT: minio
+  MINIO_PORT: "9000"
+  MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?set in .env.prod}
+  MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set in .env.prod}
+  SEARCH_ENGINE: meilisearch
+  MEILISEARCH_HOST: http://meilisearch:7700
+  MEILISEARCH_MASTER_KEY: ${MEILI_MASTER_KEY:?set in .env.prod}
+  CLAMAV_ENABLED: "true"
+  CLAMAV_HOST: clamav
+  CLAMAV_PORT: "3310"
+  SMTP_HOST: ${SMTP_HOST:?set in .env.prod}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER}
+  SMTP_PASS: ${SMTP_PASS}
+  EMAIL_FROM: ${EMAIL_FROM:-DMS <noreply@examplecorp.com>}
+  CLIENT_URL: ${PUBLIC_ORIGIN:-https://portal.examplecorp.com}/dms
+  CAMS_VERIFY_BASE_URL: ${PUBLIC_ORIGIN:-https://portal.examplecorp.com}/dms/verify
+  CORS_ORIGINS: ${PUBLIC_ORIGIN:-https://portal.examplecorp.com}
+  AUTH_ISSUER: ${AUTH_ISSUER:?set in .env.prod}
+  AUTH_AUDIENCE: ${AUTH_AUDIENCE:-edams-api}
+  AUTH_JWKS_URI: ${AUTH_JWKS_URI:?set in .env.prod}
+  OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-edams}
+  OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?set in .env.prod}
+  OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:?set in .env.prod}
+  OIDC_TOKEN_ENDPOINT: ${OIDC_TOKEN_ENDPOINT:?set in .env.prod}
+  OIDC_SCOPES: openid profile email
+  JWT_SECRET: ${JWT_SECRET:?set in .env.prod}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set in .env.prod}
+  DEV_RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY_B64:?set in .env.prod}
+  DEV_RSA_PUBLIC_KEY: ${RSA_PUBLIC_KEY_B64:?set in .env.prod}
+  AUDIT_HMAC_SECRET: ${AUDIT_HMAC_SECRET:?set in .env.prod}
+  VAULT_BACKEND: ${VAULT_BACKEND:-env}
+  DEV_VAULT_MOCK: "false"
+  VAULT_MASTER_KEY: ${VAULT_MASTER_KEY}
+  DEV_VAULT_MASTER_KEY_CURRENT_VERSION: ${VAULT_MASTER_KEY_CURRENT_VERSION:-1}
+  VAULT_ADDR: ${VAULT_ADDR}
+  VAULT_TOKEN: ${VAULT_TOKEN}
+  ESIGN_P12_B64: ${ESIGN_P12_B64}
+  ESIGN_P12_PASSPHRASE: ${ESIGN_P12_PASSPHRASE}
+  ENABLE_API_DOCS: "false"
+  ENABLE_PUBLIC_METRICS_ROUTE: "true" # internal network only; not exposed by Apache
+  # Shared secret for SSO's admin console -> DMS internal role/permission-override
+  # API (shared/internalAuth.ts) — was missing from this env block entirely, so
+  # setting it in .env.prod alone did nothing for the containerized deploy.
+  DMS_INTERNAL_API_KEY: ${DMS_INTERNAL_API_KEY:?set in .env.prod}
+
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    # Built from this checkout; a release never consumes a registry-wide latest tag.
+    image: dms-backend:release
+    command: ["node", "dist/scripts/migrate.js", "up"]
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-dmsprod}
+      # Migrations run as the superuser: they own tables and (re)create RLS
+      # policies. The app itself never gets this credential.
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+      # env.ts zod-parses these even though migrate doesn't use them:
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      AUDIT_HMAC_SECRET: ${AUDIT_HMAC_SECRET}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: dms-backend:release
+    ports:
+      - "127.0.0.1:7100:7100"
+    environment:
+      <<: *backend-env
+      ENABLE_QUEUE_WORKERS: "false"
+      ENABLE_OUTBOX_POLLING: "false"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+      meilisearch:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:7100/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1G
+
+  worker:
+    image: dms-backend:release
+    command: ["node", "dist/src/bin/worker.js"]
+    environment:
+      <<: *backend-env
+      ENABLE_QUEUE_WORKERS: "true"
+      ENABLE_OUTBOX_POLLING: "true"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_ORIGIN:-https://portal.examplecorp.com}/dms/api/v1
+        NEXT_PUBLIC_SOCKET_URL: ${PUBLIC_ORIGIN:-https://portal.examplecorp.com}
+        NEXT_PUBLIC_BASE_PATH: /dms
+    image: dms-frontend:release
+    ports:
+      - "127.0.0.1:7101:7101"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  # ── Optional connection pooler (R-01) ──────────────────────────────────
+  #
+  # OFF by default. Start it with:  docker compose --profile pgbouncer up -d
+  # and then point the backend at it by setting, in .env.prod:
+  #     DB_HOST=pgbouncer
+  #     DB_PORT=6432
+  #
+  # Read this before turning it on, because the benefit is NOT the one the
+  # audit register originally claimed. Transaction pooling releases a server
+  # connection at COMMIT, but DMS holds its transaction for the whole request
+  # (tenantContext, so that RLS's SET LOCAL applies to every query in the
+  # request) — so PgBouncer holds a server connection for the whole request
+  # too. It does NOT raise the concurrent-request ceiling on its own.
+  #
+  # What it does buy:
+  #   * One shared server-connection budget. Today the API process and the
+  #     BullMQ worker each reserve up to DB_POOL_MAX independently, and any
+  #     second API instance would reserve another. Behind PgBouncer they draw
+  #     from default_pool_size instead.
+  #   * Tunable overflow. Past the pool, requests wait on query_wait_timeout
+  #     in one configurable place rather than each process failing on its own
+  #     DB_POOL_ACQUIRE_MS.
+  #   * Capacity becomes a one-line change here rather than a redeploy of
+  #     every service's pool setting.
+  #
+  # Transaction mode is SAFE for DMS, and that part of the original analysis
+  # does hold: the codebase uses only transaction-scoped state. Verified by
+  # audit — zero occurrences of LISTEN/NOTIFY, currval(), session-level
+  # pg_advisory_lock(), SET SESSION, temp tables or DISCARD; the tenant GUC is
+  # SET LOCAL and the audit lock is pg_advisory_xact_lock, both of which end
+  # at COMMIT. Re-check that before adopting any of those constructs.
+  pgbouncer:
+    image: edoburu/pgbouncer:1.23.1-p2
+    profiles: ["pgbouncer"]
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: edams_app
+      DB_PASSWORD: ${EDAMS_APP_DB_PASSWORD:?set in .env.prod}
+      DB_NAME: ${DB_NAME:-dmsprod}
+      POOL_MODE: transaction
+      # Server connections PgBouncer will open to Postgres per user/database
+      # pair. This — not DB_POOL_MAX — becomes the real concurrency ceiling
+      # once the backend connects through here. Keep it comfortably under
+      # max_connections (300) with room for the other three systems.
+      DEFAULT_POOL_SIZE: "80"
+      # Client connections PgBouncer will accept. Deliberately much larger
+      # than DEFAULT_POOL_SIZE — absorbing bursts in the pooler instead of
+      # refusing them is the entire point.
+      MAX_CLIENT_CONN: "500"
+      # How long a client waits for a server connection before being failed.
+      # Mirrors DB_POOL_ACQUIRE_MS (30s) so behaviour at saturation does not
+      # change shape when this is switched on.
+      QUERY_WAIT_TIMEOUT: "30"
+      AUTH_TYPE: scram-sha-256
+    ports:
+      - "127.0.0.1:6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6432 -U edams_app -d ${DB_NAME:-dmsprod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+      POSTGRES_DB: ${DB_NAME:-dmsprod}
+      EDAMS_APP_DB_PASSWORD: ${EDAMS_APP_DB_PASSWORD:?set in .env.prod}
+    # Stock image defaults (shared_buffers ~128MB, no effective_cache_size/
+    # work_mem tuning) were never overridden despite this instance backing
+    # every DMS query on the server. Sized against the 2G memory limit below
+    # (shared_buffers ~25%, effective_cache_size ~60%) — re-tune both
+    # together if the memory limit changes.
+    #
+    # R-01 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): max_connections raised from the
+    # image default of 100 to 300. The earlier note here said 100 "wasn't the
+    # actual constraint" because a live check found only ~13 connections in
+    # use — true at the time, and beside the point. The constraint is not
+    # average use, it is the CEILING: tenantContext holds one connection for
+    # the full lifetime of every authenticated request, so DB_POOL_MAX is a
+    # hard cap on concurrent authenticated requests, and the 100 default is
+    # shared across GMS/DMS/SSO/MRS. DB_POOL_MAX is now 60 for DMS; 300 leaves
+    # real headroom for the other three plus the worker, backup sidecar and
+    # migration job. Each idle backend costs Postgres roughly 2MB, so 300 is
+    # a small memory cost against the 2G limit below — and far cheaper than
+    # 500-ing requests at the ceiling.
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=300"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=1536MB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME:-dmsprod}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+  db-backup:
+    image: postgres:16-alpine
+    entrypoint: ["/bin/sh", "/backup/pg-backup-loop.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${DB_NAME:-dmsprod}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ./deploy/backup:/backup:ro
+      - db_backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  minio:
+    # MinIO stopped publishing images to Docker Hub (minio/minio) — the
+    # registry now serving actual pulls is quay.io. Same exact release tag,
+    # just the correct host; verified this tag exists at quay.io before
+    # pinning it here.
+    image: quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env.prod}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env.prod}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+
+  # Enables versioning on the document buckets (ransomware/fat-finger
+  # protection) — runs once per `up`, idempotent.
+  minio-init:
+    # Same Docker Hub -> quay.io move as the minio service above.
+    image: quay.io/minio/mc:RELEASE.2025-07-21T05-28-08Z
+    entrypoint: ["/bin/sh", "/backup/minio-init.sh"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./deploy/backup:/backup:ro
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+
+  meilisearch:
+    # Same version as docker-compose.dev.yml -- see that file's comment.
+    image: getmeili/meilisearch:v1.53.0
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set in .env.prod}
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meili_data:/meili_data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+
+  clamav:
+    image: clamav/clamav:1.5.4_base-debian13-slim
+    volumes:
+      - clamav_data:/var/lib/clamav
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    # Internal only — reach it via `docker compose port` / SSH tunnel, or put
+    # it behind an authenticated Caddy vhost if a UI is wanted.
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:13.2.2
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set in .env.prod}
+      GF_SERVER_ROOT_URL: ${PUBLIC_ORIGIN:-https://portal.examplecorp.com}/dms/grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  meili_data:
+  clamav_data:
+  prometheus_data:
+  grafana_data:
+  db_backups:

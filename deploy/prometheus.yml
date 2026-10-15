@@ -1,0 +1,18 @@
+# Prometheus scrape config for the DMS prod compose stack.
+# The backend's /metrics is unauthenticated ONLY on the internal Docker
+# network (ENABLE_PUBLIC_METRICS_ROUTE) — Caddy refuses it publicly.
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: dms-api
+    metrics_path: /metrics
+    static_configs:
+      # Was "backend:4000" — a leftover from an earlier port scheme. The
+      # `backend` service in docker-compose.prod.yml is configured for and
+      # healthchecked on 7100, so the old target silently never resolved
+      # (this stack is not what runs in production today — see
+      # /docs/operations/PLATFORM-OPERATIONS-GUIDE.md §1.1 — but fixed here so a compose-based
+      # deployment doesn't inherit a dead scrape target).
+      - targets: ["backend:7100"]

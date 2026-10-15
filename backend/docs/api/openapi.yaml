@@ -1,0 +1,2793 @@
+openapi: 3.1.0
+info:
+  title: DMS API
+  version: 1.0.0
+  description: |
+    Enterprise Document & Archive Management System API.
+    All endpoints (except /auth/* and /health) require Bearer JWT authentication.
+    The JWT must contain: user_id, role, tenant_id claims.
+
+servers:
+  - url: /api/v1
+    description: Current version
+
+tags:
+  - name: Auth
+    description: Authentication and session management
+  - name: Documents
+    description: Document lifecycle management
+  - name: Signing
+    description: Electronic and PKI digital signatures
+  - name: Versions
+    description: Document version management
+  - name: Users
+    description: User management
+  - name: Departments
+    description: Department management
+  - name: DocumentTypes
+    description: Document type configuration
+  - name: Workflow
+    description: Approval workflow engine
+  - name: LegalHold
+    description: Legal hold management
+  - name: Retention
+    description: Retention policy management
+  - name: Audit
+    description: Immutable audit log
+  - name: Search
+    description: Full-text and metadata search
+  - name: Notifications
+    description: User notifications
+  - name: Operations
+    description: System health and operations
+  - name: Letters
+    description: CAMS correspondence register and letter workflows
+  - name: Bundles
+    description: Document bundle stitching and compilation
+  - name: Forms
+    description: Form template and instance management
+  - name: ESigning
+    description: External and internal electronic signature requests
+  - name: AI
+    description: AI-assisted compliance and document enrichment
+  - name: OrgUnits
+    description: CAMS organizational units (HQ, branches, outlets, sister companies)
+  - name: AccessRules
+    description: Tenant-wide and document-type-wide access rules (ACL)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    LetterId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        documentName:
+          type: string
+          description: System-generated name in format DEPT-DOCTYPE-YYYYMMDD-SEQ4
+        title:
+          type: string
+        departmentId:
+          type: string
+          format: uuid
+        documentTypeId:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        organisationUnit:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, PENDING_REVIEW, IN_REVIEW, ON_HOLD, REJECTED, APPROVED,
+                 PENDING_SIGNATURE, SIGNING_DECLINED, SIGNED, ACTIVE, SUPERSEDED,
+                 ARCHIVED, LEGAL_HOLD, DISPOSAL_PENDING, DISPOSED, PRESERVED, CANCELLED]
+        securityClassification:
+          type: string
+          enum: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED]
+        sensitivityLabel:
+          type: string
+        retentionClass:
+          type: string
+        isOnLegalHold:
+          type: boolean
+        currentVersion:
+          type: string
+        source:
+          type: string
+        ocrStatus:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DocumentVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: string
+        isMajorVersion:
+          type: boolean
+        storageKey:
+          type: string
+        storageBucket:
+          type: string
+        fileSize:
+          type: string
+          description: BigInt as string
+        mimeType:
+          type: string
+        originalFilename:
+          type: string
+        sha256Hash:
+          type: string
+        authorId:
+          type: string
+          format: uuid
+        changeSummary:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        isActive:
+          type: boolean
+        isMfaEnabled:
+          type: boolean
+        mustChangePassword:
+          type: boolean
+
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+
+    DocumentType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        defaultRetentionClass:
+          type: string
+        requiresSignature:
+          type: boolean
+        isActive:
+          type: boolean
+
+    WorkflowTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowInstanceId:
+          type: string
+          format: uuid
+        stageName:
+          type: string
+        stageNumber:
+          type: integer
+        assignedToUserId:
+          type: string
+          format: uuid
+        assignedToRole:
+          type: string
+        slaDeadlineAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, APPROVED, REJECTED, ESCALATED, CANCELLED]
+        decision:
+          type: string
+          enum: [APPROVE, REJECT]
+        decisionReason:
+          type: string
+
+    LegalHold:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseReference:
+          type: string
+        description:
+          type: string
+        custodianName:
+          type: string
+        legalBasis:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, RELEASED]
+        appliedAt:
+          type: string
+          format: date-time
+        releasedAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        isRead:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sequenceNumber:
+          type: string
+          description: BigInt as string
+        timestamp:
+          type: string
+          format: date-time
+        eventType:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        userRole:
+          type: string
+        documentId:
+          type: string
+          format: uuid
+        actionDetails:
+          type: string
+          description: JSON string
+        isSuccess:
+          type: boolean
+        entryHash:
+          type: string
+
+    OrgUnit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        unitType:
+          type: string
+          enum: [HQ, BRANCH, OUTLET, SISTER_COMPANY]
+        parentUnitId:
+          type: string
+          format: uuid
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AccessRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        principalType:
+          type: string
+          enum: [user, role]
+        principalId:
+          type: string
+        effect:
+          type: string
+          enum: [ALLOW, DENY]
+        permission:
+          type: string
+        documentTypeId:
+          type: string
+          format: uuid
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        grantedById:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+security:
+  - bearerAuth: []
+
+paths:
+  # --- Health --------------------------------------------------------------
+  /health:
+    get:
+      tags: [Operations]
+      summary: Basic health check
+      security: []
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  # --- Auth --------------------------------------------------------------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: User registered; OTP sent to email
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and activate account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp]
+              properties:
+                email:
+                  type: string
+                otp:
+                  type: string
+      responses:
+        '200':
+          description: Account verified
+        '401':
+          description: Invalid OTP
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate and obtain access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful; access token returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  requiresMfa:
+                    type: boolean
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify-2fa:
+    post:
+      tags: [Auth]
+      summary: Verify TOTP MFA code to complete login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, totpCode]
+              properties:
+                userId:
+                  type: string
+                totpCode:
+                  type: string
+      responses:
+        '200':
+          description: MFA verified; full access token issued
+        '401':
+          description: Invalid TOTP code
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token using HTTP-only cookie
+      security: []
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Refresh token expired or revoked
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke session and clear cookies
+      responses:
+        '204':
+          description: Session revoked
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # --- Documents --------------------------------------------------------------
+  /documents:
+    get:
+      tags: [Documents]
+      summary: List documents (scoped by role and ACL)
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: take
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: folderId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+                  total:
+                    type: integer
+                  skip:
+                    type: integer
+                  take:
+                    type: integer
+    post:
+      tags: [Documents]
+      summary: Upload a new document
+      x-permission: DOCUMENT_UPLOAD
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, title, departmentCode, documentTypeCode, organisationUnit, securityClassification, retentionClass, source]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                departmentCode:
+                  type: string
+                documentTypeCode:
+                  type: string
+                organisationUnit:
+                  type: string
+                securityClassification:
+                  type: string
+                  enum: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED]
+                retentionClass:
+                  type: string
+                source:
+                  type: string
+                  enum: [MANUAL_UPLOAD, SCANNER, EMAIL, API, CREATED_IN_SYSTEM, MIGRATION]
+      responses:
+        '201':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '413':
+          description: File exceeds quota limit
+        '415':
+          description: Unsupported file type
+        '422':
+          description: Validation error
+
+  /documents/stats:
+    get:
+      tags: [Documents]
+      summary: Dashboard statistics
+      x-permission: DOCUMENT_READ
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  byStatus:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  recent:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+
+  /documents/{id}:
+    get:
+      tags: [Documents]
+      summary: Get document detail
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document with versions and workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '404':
+          description: Not found
+    patch:
+      tags: [Documents]
+      summary: Update document status via state machine
+      x-permission: DOCUMENT_UPLOAD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [toState]
+              properties:
+                toState:
+                  type: string
+      responses:
+        '200':
+          description: Status updated
+        '409':
+          description: Invalid state transition
+
+  /documents/{id}/download:
+    get:
+      tags: [Documents]
+      summary: Download document file
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: File stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '409':
+          description: Integrity violation (file tampered)
+
+  /documents/{id}/preview:
+    get:
+      tags: [Documents]
+      summary: Preview thumbnail
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Preview image
+        '415':
+          description: Preview not supported
+
+  /documents/{id}/versions:
+    get:
+      tags: [Versions]
+      summary: List document versions
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Version list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentVersion'
+    post:
+      tags: [Versions]
+      summary: Upload new version (requires document to be checked out)
+      x-permission: DOCUMENT_UPLOAD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                changeSummary:
+                  type: string
+                isMajor:
+                  type: boolean
+      responses:
+        '201':
+          description: Version created
+
+  /documents/{id}/archive:
+    post:
+      tags: [Documents]
+      summary: Archive document
+      x-permission: DOCUMENT_ARCHIVE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document archived
+
+  /documents/{id}/checkout:
+    post:
+      tags: [Documents]
+      summary: Check out document for editing
+      x-permission: DOCUMENT_CHECKOUT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Checked out
+        '409':
+          description: Already locked by another user
+
+  /documents/{id}/checkin:
+    post:
+      tags: [Documents]
+      summary: Check in (release lock on) document
+      x-permission: DOCUMENT_CHECKOUT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Checked in
+
+  /documents/{id}/sign/request:
+    post:
+      tags: [Signing]
+      summary: Request signature - transitions document to PENDING_SIGNATURE
+      x-permission: SIGNING_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature requested
+        '409':
+          description: Invalid state for signing
+
+  /documents/{id}/sign/execute:
+    post:
+      tags: [Signing]
+      summary: Execute signing (ELECTRONIC or PKI_DIGITAL)
+      x-permission: SIGNING_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signingType]
+              properties:
+                signingType:
+                  type: string
+                  enum: [ELECTRONIC, PKI_DIGITAL]
+                consentAcknowledged:
+                  type: boolean
+                  description: Required for ELECTRONIC signing
+      responses:
+        '200':
+          description: Document signed
+        '422':
+          description: Consent required for electronic signing
+
+  /documents/{id}/sign/decline:
+    post:
+      tags: [Signing]
+      summary: Decline signing with reason
+      x-permission: SIGNING_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 5
+      responses:
+        '200':
+          description: Signing declined
+
+  /documents/{id}/sign/verify:
+    get:
+      tags: [Signing]
+      summary: Verify signature integrity
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  signatures:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        signatureId:
+                          type: string
+                        signingType:
+                          type: string
+                        status:
+                          type: string
+                        hashValid:
+                          type: boolean
+                        signedAt:
+                          type: string
+                          format: date-time
+
+  # --- Users --------------------------------------------------------------
+  /users:
+    get:
+      tags: [Users]
+      summary: List users
+      x-permission: USER_MANAGE
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    post:
+      tags: [Users]
+      summary: Create user
+      x-permission: USER_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User created
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user (own profile or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User
+
+  # --- Departments --------------------------------------------------------------
+  /departments:
+    get:
+      tags: [Departments]
+      summary: List departments
+      x-permission: DOCUMENT_READ
+      responses:
+        '200':
+          description: Departments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Department'
+    post:
+      tags: [Departments]
+      summary: Create department
+      x-permission: DEPARTMENT_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  # --- Document Types --------------------------------------------------------------
+  /document-types:
+    get:
+      tags: [DocumentTypes]
+      summary: List document types
+      x-permission: DOCUMENT_READ
+      responses:
+        '200':
+          description: Types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentType'
+    post:
+      tags: [DocumentTypes]
+      summary: Create document type
+      x-permission: DOCTYPE_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name, defaultRetentionClass]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                defaultRetentionClass:
+                  type: string
+                requiresSignature:
+                  type: boolean
+      responses:
+        '201':
+          description: Created
+
+  # --- Workflow --------------------------------------------------------------
+  /workflow/definitions:
+    get:
+      tags: [Workflow]
+      summary: List workflow definitions
+      x-permission: WORKFLOW_MANAGE
+      responses:
+        '200':
+          description: Definitions
+    post:
+      tags: [Workflow]
+      summary: Create workflow definition
+      x-permission: WORKFLOW_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, version, definition]
+              properties:
+                name:
+                  type: string
+                version:
+                  type: string
+                documentTypeId:
+                  type: string
+                definition:
+                  type: object
+      responses:
+        '201':
+          description: Created
+
+  /workflow/tasks/my-queue:
+    get:
+      tags: [Workflow]
+      summary: Get tasks assigned to current user
+      x-permission: WORKFLOW_TASK_DECIDE
+      responses:
+        '200':
+          description: Task list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowTask'
+
+  /workflow/tasks/{taskId}/decide:
+    post:
+      tags: [Workflow]
+      summary: Submit approval decision
+      x-permission: WORKFLOW_TASK_DECIDE
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVE, REJECT]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Decision recorded
+
+  # --- Legal Hold --------------------------------------------------------------
+  /legal-hold:
+    get:
+      tags: [LegalHold]
+      summary: List all legal holds
+      x-permission: LEGAL_HOLD_READ
+      responses:
+        '200':
+          description: Hold list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LegalHold'
+    post:
+      tags: [LegalHold]
+      summary: Create legal hold
+      x-permission: LEGAL_HOLD_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caseReference, description, custodianName, legalBasis]
+              properties:
+                caseReference:
+                  type: string
+                  minLength: 3
+                description:
+                  type: string
+                  minLength: 20
+                custodianName:
+                  type: string
+                legalBasis:
+                  type: string
+                  minLength: 20
+                expectedDuration:
+                  type: string
+                documentIds:
+                  type: array
+                  description: Optional documents to place on hold immediately
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '201':
+          description: Hold created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LegalHold'
+
+  /legal-hold/export:
+    get:
+      tags: [LegalHold]
+      summary: Export legal hold inventory
+      x-permission: LEGAL_HOLD_READ
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json]
+            default: csv
+      responses:
+        '200':
+          description: Export file
+
+  /legal-hold/{id}:
+    get:
+      tags: [LegalHold]
+      summary: Get legal hold detail
+      x-permission: LEGAL_HOLD_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Hold detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LegalHold'
+
+  /legal-hold/{id}/add-documents:
+    post:
+      tags: [LegalHold]
+      summary: Add documents to hold
+      x-permission: LEGAL_HOLD_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentIds]
+              properties:
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Documents added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+
+  /legal-hold/{id}/release:
+    post:
+      tags: [LegalHold]
+      summary: Release legal hold
+      x-permission: LEGAL_HOLD_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [closureRef, reason]
+              properties:
+                closureRef:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Hold released
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+
+  /legal-hold/{id}/history:
+    get:
+      tags: [LegalHold]
+      summary: Audit trail for a legal hold
+      x-permission: LEGAL_HOLD_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit history
+
+  # --- Audit --------------------------------------------------------------
+  /audit:
+    get:
+      tags: [Audit]
+      summary: List recent audit logs (last 100)
+      x-permission: AUDIT_READ
+      responses:
+        '200':
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+
+  /audit/export:
+    get:
+      tags: [Audit]
+      summary: Export audit log as CSV or JSON
+      x-permission: AUDIT_READ
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json]
+            default: csv
+        - name: eventType
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10000
+      responses:
+        '200':
+          description: Exported file
+
+  /audit/verify-integrity:
+    get:
+      tags: [Audit]
+      summary: Verify HMAC hash chain integrity
+      x-permission: AUDIT_READ
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  brokenAtSequence:
+                    type: string
+                  message:
+                    type: string
+
+  /audit/document/{documentId}:
+    get:
+      tags: [Audit]
+      summary: Get audit events for a specific document
+      x-permission: AUDIT_READ
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document audit trail
+
+  # --- Search --------------------------------------------------------------
+  /search:
+    get:
+      tags: [Search]
+      summary: Full-text + metadata search (ACL-filtered)
+      x-permission: SEARCH
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: departmentCode
+          in: query
+          schema:
+            type: string
+        - name: documentTypeCode
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: securityClassification
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hits:
+                    type: array
+                    items:
+                      type: object
+                  totalHits:
+                    type: integer
+
+  /search/saved:
+    get:
+      tags: [Search]
+      summary: List saved searches
+      x-permission: SEARCH
+      responses:
+        '200':
+          description: Saved searches
+    post:
+      tags: [Search]
+      summary: Save a search
+      x-permission: SEARCH
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, query]
+              properties:
+                name:
+                  type: string
+                query:
+                  type: string
+                filters:
+                  type: object
+      responses:
+        '201':
+          description: Search saved
+
+  # --- Notifications --------------------------------------------------------------
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications for current user
+      responses:
+        '200':
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+
+  /notifications/{id}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked as read
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      responses:
+        '200':
+          description: All marked as read
+
+  # --- Retention --------------------------------------------------------------
+  /retention:
+    get:
+      tags: [Retention]
+      summary: List retention policies
+      x-permission: RETENTION_READ
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+    post:
+      tags: [Retention]
+      summary: Create retention policy
+      x-permission: RETENTION_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name, triggerEvent, disposalAction, authority]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                retentionYears:
+                  type: integer
+                isPermanent:
+                  type: boolean
+                triggerEvent:
+                  type: string
+                disposalAction:
+                  type: string
+                authority:
+                  type: string
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+
+  /retention/{id}:
+    get:
+      tags: [Retention]
+      summary: Get retention policy detail
+      x-permission: RETENTION_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Policy detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '404':
+          description: Not found
+    patch:
+      tags: [Retention]
+      summary: Update retention policy
+      x-permission: RETENTION_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+    delete:
+      tags: [Retention]
+      summary: Deactivate retention policy
+      x-permission: RETENTION_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Policy deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+
+  /retention/disposal/{documentId}/authorise:
+    post:
+      tags: [Retention]
+      summary: Authorise disposal of a document
+      x-permission: RETENTION_MANAGE
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Disposal authorised
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+
+  /retention/cold-restore/{documentId}:
+    post:
+      tags: [Retention]
+      summary: Restore a document from cold storage
+      x-permission: RETENTION_MANAGE
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Restore initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+
+  # --- Letters --------------------------------------------------------------
+  /letters/verify:
+    get:
+      tags: [Letters]
+      summary: Public QR verification for a registered CAMS letter
+      security: []
+      parameters:
+        - name: ref
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 64
+            maxLength: 64
+      responses:
+        '200':
+          description: Authenticity result
+        '422':
+          description: Missing or invalid verification parameters
+  /letters:
+    get:
+      tags: [Letters]
+      summary: List letters with register filters and pagination
+      x-permission: LETTER_READ
+      parameters:
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [OUTGOING, INCOMING]
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: orgUnitId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: departmentId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: letterType
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: take
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Paginated letter register
+    post:
+      tags: [Letters]
+      summary: Create an outgoing draft letter
+      x-permission: LETTER_CREATE
+      responses:
+        '201':
+          description: Draft letter created
+  /letters/register:
+    post:
+      tags: [Letters]
+      summary: Register an incoming letter and optional scan
+      x-permission: LETTER_REGISTER
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [orgUnitId, departmentId, subject, correspondent]
+              properties:
+                orgUnitId:
+                  type: string
+                  format: uuid
+                departmentId:
+                  type: string
+                  format: uuid
+                subject:
+                  type: string
+                correspondent:
+                  type: string
+                scan:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Incoming letter registered
+  /letters/{id}:
+    get:
+      tags: [Letters]
+      summary: Get letter detail
+      x-permission: LETTER_READ
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Letter detail
+    patch:
+      tags: [Letters]
+      summary: Update a draft or returned letter
+      x-permission: LETTER_CREATE
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Updated letter
+  /letters/{id}/revisions/{revisionNo}:
+    get:
+      tags: [Letters]
+      summary: Get the full body of one letter revision
+      x-permission: LETTER_READ
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+        - name: revisionNo
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Revision body
+        '422':
+          description: revisionNo must be a positive integer
+  /letters/{id}/submit:
+    post:
+      tags: [Letters]
+      summary: Submit a draft letter with approval steps
+      x-permission: LETTER_CREATE
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Letter submitted for review
+  /letters/{id}/steps/{stepId}/decision:
+    post:
+      tags: [Letters]
+      summary: Decide a review or approval step
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Decision recorded
+  /letters/{id}/pdf:
+    get:
+      tags: [Letters]
+      summary: Download final letter PDF
+      x-permission: LETTER_READ
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: PDF stream
+  /letters/{id}/dispatches:
+    post:
+      tags: [Letters]
+      summary: Record dispatch details
+      x-permission: LETTER_DISPATCH
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '201':
+          description: Dispatch recorded
+  /letters/{id}/dispatches/{dispatchId}/acknowledge:
+    post:
+      tags: [Letters]
+      summary: Acknowledge a dispatch
+      x-permission: LETTER_DISPATCH
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+        - name: dispatchId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dispatch acknowledged
+  /letters/{id}/cancel:
+    post:
+      tags: [Letters]
+      summary: Cancel a letter
+      x-permission: LETTER_CREATE
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Letter cancelled
+  /letters/{id}/assign:
+    post:
+      tags: [Letters]
+      summary: Assign an incoming letter
+      x-permission: LETTER_REGISTER
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Letter assigned
+  /letters/{id}/resolve:
+    post:
+      tags: [Letters]
+      summary: Mark an incoming letter responded or closed
+      x-permission: LETTER_REGISTER
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Incoming letter resolved
+  /letters/{id}/links:
+    get:
+      tags: [Letters]
+      summary: Get bidirectional letter links
+      x-permission: LETTER_READ
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Letter thread
+    post:
+      tags: [Letters]
+      summary: Link two letters
+      x-permission: LETTER_READ
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '201':
+          description: Link created
+  /letters/{id}/links/{linkId}:
+    delete:
+      tags: [Letters]
+      summary: Remove a letter link
+      x-permission: LETTER_READ
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Link removed
+  /letters/{id}/archive:
+    post:
+      tags: [Letters]
+      summary: Archive a dispatched letter
+      x-permission: LETTER_DISPATCH
+      parameters:
+        - $ref: '#/components/parameters/LetterId'
+      responses:
+        '200':
+          description: Letter archived
+
+  # --- Org Units --------------------------------------------------------------
+  /org-units:
+    get:
+      tags: [OrgUnits]
+      summary: List organizational units
+      x-permission: ORG_UNIT_READ
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Org unit list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrgUnit'
+    post:
+      tags: [OrgUnits]
+      summary: Create an organizational unit
+      x-permission: ORG_UNIT_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name, unitType]
+              properties:
+                code:
+                  type: string
+                  minLength: 2
+                  maxLength: 30
+                  pattern: '^[A-Z0-9-]+$'
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                unitType:
+                  type: string
+                  enum: [HQ, BRANCH, OUTLET, SISTER_COMPANY]
+                parentUnitId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Org unit created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrgUnit'
+        '409':
+          description: Unit code already exists
+        '422':
+          description: Parent unit not found
+
+  /org-units/{id}:
+    patch:
+      tags: [OrgUnits]
+      summary: Update an organizational unit
+      x-permission: ORG_UNIT_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                parentUnitId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: Org unit updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrgUnit'
+        '404':
+          description: Organizational unit not found
+        '422':
+          description: Invalid parent unit
+
+  # --- Access Rules --------------------------------------------------------------
+  /access-rules:
+    get:
+      tags: [AccessRules]
+      summary: List access rules
+      x-permission: ACL_MANAGE
+      parameters:
+        - name: principalType
+          in: query
+          schema:
+            type: string
+            enum: [user, role]
+        - name: principalId
+          in: query
+          schema:
+            type: string
+        - name: documentTypeId
+          in: query
+          description: Document type UUID, or the literal string "null" for tenant-wide rules
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Access rule list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccessRule'
+    post:
+      tags: [AccessRules]
+      summary: Create an access rule (tenant-wide or document-type-wide)
+      x-permission: ACL_MANAGE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [principalType, principalId, effect, permission]
+              properties:
+                principalType:
+                  type: string
+                  enum: [user, role]
+                principalId:
+                  type: string
+                effect:
+                  type: string
+                  enum: [ALLOW, DENY]
+                permission:
+                  type: string
+                documentTypeId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                expiresAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '201':
+          description: Access rule created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccessRule'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /access-rules/{id}:
+    get:
+      tags: [AccessRules]
+      summary: Get a single access rule
+      x-permission: ACL_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Access rule detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccessRule'
+        '404':
+          description: Not found
+    delete:
+      tags: [AccessRules]
+      summary: Delete an access rule
+      x-permission: ACL_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Access rule deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  # --- Bundles --------------------------------------------------------------
+  /bundles:
+    get:
+      tags: [Bundles]
+      summary: List document bundles
+      x-permission: DOCUMENT_READ
+      responses:
+        '200':
+          description: Bundle list
+    post:
+      tags: [Bundles]
+      summary: Create a document bundle
+      x-permission: DOCUMENT_READ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Bundle created
+  /bundles/{id}:
+    get:
+      tags: [Bundles]
+      summary: Get bundle detail with ordered items
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bundle detail
+  /bundles/{id}/items:
+    post:
+      tags: [Bundles]
+      summary: Add a document to a bundle
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Bundle item added
+  /bundles/{id}/items/reorder:
+    patch:
+      tags: [Bundles]
+      summary: Reorder bundle items
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bundle reordered
+  /bundles/{id}/items/{itemId}:
+    delete:
+      tags: [Bundles]
+      summary: Remove a document from a bundle
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bundle item removed
+  /bundles/{id}/compile:
+    post:
+      tags: [Bundles]
+      summary: Compile bundle items into a first-class PDF document
+      x-permission: DOCUMENT_UPLOAD
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bundle compiled
+
+  # --- E-signing ------------------------------------------------------------
+  /documents/{documentId}/signing:
+    get:
+      tags: [ESigning]
+      summary: List signature requests for a document
+      x-permission: SIGNING_READ
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature requests
+    post:
+      tags: [ESigning]
+      summary: Create a signature request for a document
+      x-permission: SIGNING_MANAGE
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Signature request created
+  /signing/{requestId}:
+    get:
+      tags: [ESigning]
+      summary: Get a signature request
+      x-permission: SIGNING_READ
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature request detail
+  /signing/requests:
+    get:
+      tags: [ESigning]
+      summary: List signature requests (scope pending-me | sent-by-me | completed | all)
+      description: scope=all is the tenant-wide read-only oversight list (document:read_all holders only; 403 otherwise) and accepts status and q filters.
+      x-permission: SIGNING_READ
+      parameters:
+        - { name: scope, in: query, schema: { type: string, enum: [pending-me, sent-by-me, completed, all] } }
+        - { name: status, in: query, schema: { type: string, enum: [draft, sent, partially_signed, completed, voided, expired] } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: skip, in: query, schema: { type: integer } }
+        - { name: take, in: query, schema: { type: integer } }
+      responses:
+        '200':
+          description: Page of signature requests
+  /signing/{requestId}/audit:
+    get:
+      tags: [ESigning]
+      summary: Audit trail of one signature request (who, when, address, browser, action)
+      description: Requester, SYSTEM_ADMIN, or audit:read / document:read_all holders only.
+      x-permission: SIGNING_READ
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ordered audit entries
+        '403':
+          description: Not the requester or an oversight holder
+  /signing/{requestId}/send:
+    post:
+      tags: [ESigning]
+      summary: Send a draft signature request
+      x-permission: SIGNING_MANAGE
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature request sent
+  /signing/{requestId}/recipients/{recipientId}/view:
+    get:
+      tags: [ESigning]
+      summary: Public signer view link that marks a recipient viewed
+      security: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: recipientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Public signing context
+  /signing/{requestId}/recipients/{recipientId}/sign:
+    post:
+      tags: [ESigning]
+      summary: Internal recipient signs
+      x-permission: SIGNING_MANAGE
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: recipientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature recorded
+  /signing/{requestId}/recipients/{recipientId}/sign/external:
+    post:
+      tags: [ESigning]
+      summary: External recipient signs with access token
+      security: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: recipientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature recorded
+  /signing/{requestId}/recipients/{recipientId}/decline:
+    post:
+      tags: [ESigning]
+      summary: Internal recipient declines
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: recipientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature declined
+  /signing/{requestId}/recipients/{recipientId}/decline/external:
+    post:
+      tags: [ESigning]
+      summary: External recipient declines with access token
+      security: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: recipientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Signature declined
+
+  # --- Forms ----------------------------------------------------------------
+  /forms/templates:
+    get:
+      tags: [Forms]
+      summary: List form templates
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending_approval, active, deprecated]
+      responses:
+        '200':
+          description: Form templates
+    post:
+      tags: [Forms]
+      summary: Create a form template
+      x-permission: DOCTYPE_MANAGE
+      responses:
+        '201':
+          description: Template created
+  /forms/templates/{id}:
+    get:
+      tags: [Forms]
+      summary: Get form template detail
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Form template
+  /forms/templates/{id}/status:
+    patch:
+      tags: [Forms]
+      summary: Transition a form template status
+      x-permission: DOCTYPE_MANAGE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Template status updated
+  /forms/instances:
+    post:
+      tags: [Forms]
+      summary: Create a document-backed form instance
+      x-permission: DOCUMENT_UPLOAD
+      responses:
+        '201':
+          description: Form instance created
+  /forms/instances/{id}:
+    get:
+      tags: [Forms]
+      summary: Get form instance detail
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Form instance
+
+  # --- AI -------------------------------------------------------------------
+  /ai/chat:
+    post:
+      tags: [AI]
+      summary: Ask the tenant-scoped compliance assistant
+      x-permission: AUDIT_READ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                history:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Assistant response
+        '503':
+          description: AI features are not configured
+  /ai/documents/{id}/summary:
+    get:
+      tags: [AI]
+      summary: Get stored AI summary for a document
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stored summary
+  /ai/documents/{id}/suggestions:
+    get:
+      tags: [AI]
+      summary: Get stored AI metadata suggestions for a document
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stored suggestions
+  /ai/documents/{id}/summarize:
+    post:
+      tags: [AI]
+      summary: Queue on-demand AI summarization
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Summarization queued
+  /ai/documents/{id}/extract:
+    post:
+      tags: [AI]
+      summary: Queue on-demand AI metadata extraction
+      x-permission: DOCUMENT_READ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Extraction queued
+
+  # --- Operations --------------------------------------------------------------
+  /operations/health:
+    get:
+      tags: [Operations]
+      summary: System health check (DB, Redis, MinIO, Meilisearch, ClamAV)
+      security: []
+      responses:
+        '200':
+          description: Health status of all services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  db:
+                    type: string
+                  redis:
+                    type: string
+                  minio:
+                    type: string
+                  meilisearch:
+                    type: string
+                  clamav:
+                    type: string
+

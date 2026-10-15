@@ -1,0 +1,299 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  typecheck-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm --workspace backend run lint
+      - run: npm --workspace frontend run lint
+      - run: npm run containers:check-pins
+      # Fails on any NEW high/critical advisory in the production tree. One
+      # advisory is accepted with a written reason and a removal condition —
+      # see tools/audit-gate.mjs. A bare `npm audit --audit-level=high` is red
+      # on every run because of it, and a permanently red gate gets ignored.
+      - run: npm run audit:gate
+      # Coverage is a tracked release signal, not a decorative local-only
+      # report. Keep test-results.json too: test:status consumes it below.
+      - run: npm --workspace backend run test:coverage
+      - run: npm run test:status
+      - run: git diff --exit-code -- Documentations/TEST_STATUS.md
+      # The frontend refuses production builds without an explicit API URL
+      # (no silent localhost fallback) — CI proves buildability with a
+      # placeholder; real deploys pass their own values via --build-arg.
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://ci-placeholder.invalid/api/v1
+          NEXT_PUBLIC_SOCKET_URL: https://ci-placeholder.invalid
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: error
+
+  db-backed-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edams
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d edams"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      TZ: UTC
+      PORT: 7100
+      HOST: 0.0.0.0
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: edams
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-jwt-secret-with-at-least-32-chars
+      JWT_REFRESH_SECRET: ci-refresh-secret-with-at-least-32
+      AUDIT_HMAC_SECRET: ci-audit-secret-with-at-least-32-chars
+      LOCAL_JWT_MOCK: "true"
+      STORAGE_DRIVER: local
+      ENABLE_QUEUE_WORKERS: "false"
+      ENABLE_OUTBOX_POLLING: "false"
+      CLAMAV_ENABLED: "false"
+      ENABLE_API_DOCS: "false"
+      CLIENT_URL: http://localhost:7101
+      CAMS_VERIFY_BASE_URL: http://localhost:7101/verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm --workspace backend run db:migrate:check
+      - run: npm --workspace backend run db:migrate
+      - run: npm --workspace backend run db:seed:core
+      - run: npm --workspace backend exec tsx test-scripts/test-acl-ancestry.ts
+      - name: Start backend
+        run: |
+          npm --workspace backend run dev > backend-ci.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://localhost:7100/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat backend-ci.log
+          exit 1
+      - run: npm --workspace backend exec tsx test-scripts/verify-cams.ts
+      # These real DB/HTTP checks catch the exact classes that mocks cannot:
+      # durable session cutoffs, tenant filtering, comments and report SQL.
+      - run: npm --workspace backend exec tsx test-scripts/verify-session-revocation.ts
+      - run: npm --workspace backend exec tsx test-scripts/verify-tenant-scoping.ts
+      - run: npm --workspace backend exec tsx test-scripts/verify-comments.ts
+      - run: npm --workspace backend exec tsx test-scripts/verify-reports.ts
+
+  full-stack-verification:
+    # The integration job above stays quick and diagnosis-friendly. This job
+    # proves the whole user-facing stack: every backend verifier and every
+    # Chromium flow against the same ephemeral Docker development services.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NODE_ENV: development
+      TZ: UTC
+      PORT: 7100
+      HOST: 0.0.0.0
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: change-me-dev-password
+      DB_NAME: DMS
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: ci-jwt-secret-with-at-least-32-chars
+      JWT_REFRESH_SECRET: ci-refresh-secret-with-at-least-32
+      AUDIT_HMAC_SECRET: ci-audit-secret-with-at-least-32-chars
+      LOCAL_JWT_MOCK: "true"
+      STORAGE_DRIVER: minio
+      MINIO_ENDPOINT: 127.0.0.1
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MEILISEARCH_HOST: http://127.0.0.1:7700
+      MEILISEARCH_MASTER_KEY: devmasterkey123
+      CLAMAV_ENABLED: "true"
+      CLAMAV_HOST: 127.0.0.1
+      CLAMAV_PORT: 3310
+      SMTP_HOST: 127.0.0.1
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      EMAIL_REDIRECT_TO: ci@invalid.test
+      VERIFY_EMAIL_TO: ci@invalid.test
+      # `npm run dev` launches the API and dedicated worker separately, as a
+      # real deployment does. Do not also start workers inside the API.
+      ENABLE_QUEUE_WORKERS: "false"
+      ENABLE_OUTBOX_POLLING: "true"
+      ENABLE_API_DOCS: "false"
+      CLIENT_URL: http://localhost:7101
+      CAMS_VERIFY_BASE_URL: http://localhost:7101/verify
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:7100/api/v1
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:7100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - name: Start development dependencies
+        run: docker compose -f docker-compose.dev.yml up -d
+      - name: Wait for ClamAV
+        run: |
+          for i in {1..120}; do
+            if nc -z 127.0.0.1 3310; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.dev.yml logs clamav
+          exit 1
+      - run: npm --workspace backend run db:migrate
+      - run: npm --workspace backend run db:seed:core
+      - name: Start backend and worker
+        run: npm --workspace backend run dev > backend-full-stack.log 2>&1 &
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:7100/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat backend-full-stack.log
+          exit 1
+      - name: Start frontend
+        run: npm --workspace frontend run dev > frontend-full-stack.log 2>&1 &
+      - name: Wait for frontend
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://127.0.0.1:7101/login >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat frontend-full-stack.log
+          exit 1
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify:ci
+      - run: npm run e2e
+      - name: Upload full-stack diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-stack-diagnostics
+          path: |
+            backend-full-stack.log
+            frontend-full-stack.log
+            playwright-report
+          if-no-files-found: ignore
+      - name: Stop development dependencies
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down -v
+
+  # Documentations/rollout.md §5.3: build the deploy artifact on every push/PR (catches a
+  # broken Dockerfile immediately), but only PUSH it to the registry on main
+  # — that pushed image, tagged with the commit SHA, is the one thing that
+  # ever gets promoted staging -> production. Nothing environment-specific
+  # is baked in except the frontend's build-time NEXT_PUBLIC_* vars, which
+  # each real deploy should override via --build-arg for its own environment.
+  build-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          load: true
+          tags: dms-backend:ci
+      # Image vulnerability gate: fail only on FIXABLE CRITICALs (actionable
+      # — bump the base image / dep), report-only would be noise and
+      # unfixed-vuln failures would wedge CI on upstream Debian timelines.
+      - name: Scan backend image (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: dms-backend:ci
+          format: table
+          exit-code: "1"
+          severity: CRITICAL
+          ignore-unfixed: true
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: false
+          tags: dms-frontend:ci
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://ci-placeholder.invalid/api/v1
+            NEXT_PUBLIC_SOCKET_URL=https://ci-placeholder.invalid
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push backend image (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+      - name: Push frontend image (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://ci-placeholder.invalid/api/v1
+            NEXT_PUBLIC_SOCKET_URL=https://ci-placeholder.invalid
+          tags: |
+            ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}

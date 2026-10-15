@@ -1,0 +1,17 @@
+DROP POLICY IF EXISTS users_hide_platform_admin ON users;
+DROP TRIGGER IF EXISTS platform_admin_guard_users ON users;
+DROP TRIGGER IF EXISTS platform_admin_guard_roles ON roles;
+DROP TRIGGER IF EXISTS platform_admin_guard_user_roles ON user_roles;
+DROP TRIGGER IF EXISTS platform_admin_guard_role_permissions ON role_permissions;
+DROP TRIGGER IF EXISTS platform_admin_guard_user_tenants ON user_tenants;
+DROP TRIGGER IF EXISTS platform_admin_guard_user_permission_overrides ON user_permission_overrides;
+DROP FUNCTION IF EXISTS platform_admin_guard();
+DROP FUNCTION IF EXISTS dms_is_platform_admin(uuid);
+DROP FUNCTION IF EXISTS platform_vault_lock();
+DROP FUNCTION IF EXISTS platform_vault_unlock(text, integer);
+DROP FUNCTION IF EXISTS platform_vault_is_unlocked();
+DROP FUNCTION IF EXISTS platform_vault_failure_count();
+DROP TABLE IF EXISTS platform_vault_log;
+DROP TABLE IF EXISTS platform_vault_unlocked;
+DROP TABLE IF EXISTS platform_vault;
+DROP SEQUENCE IF EXISTS platform_vault_failures;

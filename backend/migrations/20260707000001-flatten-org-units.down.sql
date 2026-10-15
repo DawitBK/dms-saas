@@ -1,0 +1,8 @@
+-- Data-only migration (a single UPDATE, no schema change). It set
+-- parent_unit_id = NULL on every org unit that had one, to flatten an
+-- accidentally-nested hierarchy — the prior parent_unit_id values it
+-- overwrote were never recorded anywhere, so there is no way to restore
+-- which unit used to be nested under which. Fabricating a guessed parentage
+-- (e.g. re-nesting by name pattern) could silently reintroduce wrong,
+-- possibly fictitious relationships rather than the real pre-migration ones.
+-- down() for this migration is intentionally a no-op.

@@ -1,0 +1,656 @@
+<title>DMS User Manual — Example Corp Systems</title>
+<style>
+  :root {
+    --bg: #f6f5fb;
+    --surface: #ffffff;
+    --surface-raised: #eeecf7;
+    --border: #e0dced;
+    --text: #1c1a24;
+    --text-muted: #62606f;
+    --accent: #6552e0;
+    --accent-contrast: #ffffff;
+    --accent-soft: #ece9fb;
+    --success: #157a4a;
+    --success-soft: #e3f5ec;
+    --warning: #9a5b00;
+    --warning-soft: #fbeed7;
+    --danger: #b0241f;
+    --danger-soft: #fbe7e5;
+    --info: #1c6fae;
+    --info-soft: #e4f0fa;
+    --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif", serif;
+    --font-body: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14131b;
+      --surface: #1c1b26;
+      --surface-raised: #242332;
+      --border: #322f42;
+      --text: #ece9f7;
+      --text-muted: #9d99b0;
+      --accent: #a394ff;
+      --accent-contrast: #14131b;
+      --accent-soft: #2b2650;
+      --success: #4fd394;
+      --success-soft: #163227;
+      --warning: #f0b559;
+      --warning-soft: #3a2a11;
+      --danger: #f2867e;
+      --danger-soft: #3a1a19;
+      --info: #7ec1f2;
+      --info-soft: #16283a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14131b;
+    --surface: #1c1b26;
+    --surface-raised: #242332;
+    --border: #322f42;
+    --text: #ece9f7;
+    --text-muted: #9d99b0;
+    --accent: #a394ff;
+    --accent-contrast: #14131b;
+    --accent-soft: #2b2650;
+    --success: #4fd394;
+    --success-soft: #163227;
+    --warning: #f0b559;
+    --warning-soft: #3a2a11;
+    --danger: #f2867e;
+    --danger-soft: #3a1a19;
+    --info: #7ec1f2;
+    --info-soft: #16283a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+    color: var(--text);
+  }
+  code, .mono {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+  }
+  .shell {
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  header.masthead {
+    padding: 40px 32px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  header.masthead .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  header.masthead h1 {
+    font-size: 34px;
+    margin: 2px 0 4px;
+  }
+  header.masthead p {
+    color: var(--text-muted);
+    margin: 0;
+    max-width: 62ch;
+  }
+  nav.toc {
+    border-right: 1px solid var(--border);
+    padding: 28px 20px 60px;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav.toc .toc-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 10px 8px;
+  }
+  nav.toc ul {
+    list-style: none;
+    margin: 0 0 22px;
+    padding: 0;
+  }
+  nav.toc li a {
+    display: block;
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  nav.toc li a:hover { background: var(--surface-raised); text-decoration: none; }
+  nav.toc li.sub a { color: var(--text-muted); font-size: 13px; padding-left: 20px; }
+
+  main { padding: 8px 40px 100px; max-width: 840px; }
+  section { padding-top: 46px; border-top: 1px solid var(--border); margin-top: 6px; }
+  section:first-of-type { border-top: none; }
+  section h2 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  section h2 .num { color: var(--accent); font-family: var(--font-mono); font-size: 16px; }
+  section > .lede { color: var(--text-muted); margin: 0 0 22px; max-width: 66ch; }
+  h3 { font-size: 19px; margin: 30px 0 10px; }
+  h4 { font-size: 15px; margin: 20px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-family: var(--font-body); font-weight: 700; }
+  p { margin: 0 0 14px; max-width: 66ch; }
+  ol, ul { margin: 0 0 16px; padding-left: 24px; max-width: 66ch; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; }
+
+  .callout {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    margin: 18px 0;
+    display: flex;
+    gap: 12px;
+    max-width: 66ch;
+  }
+  .callout .icon { font-family: var(--font-mono); font-weight: 700; flex-shrink: 0; width: 20px; text-align: center; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.verified { background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 35%, var(--border)); }
+  .callout.verified .icon { color: var(--success); }
+  .callout.note { background: var(--info-soft); border-color: color-mix(in srgb, var(--info) 35%, var(--border)); }
+  .callout.note .icon { color: var(--info); }
+  .callout.caution { background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 35%, var(--border)); }
+  .callout.caution .icon { color: var(--warning); }
+
+  .steps { border-left: 2px solid var(--border); padding-left: 20px; margin: 16px 0; max-width: 62ch; }
+  .steps > li { padding-left: 4px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px;
+    font-size: 14px;
+  }
+  .table-wrap { overflow-x: auto; margin: 14px 0 22px; }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  tr:last-child td { border-bottom: none; }
+  td.yes { color: var(--success); font-weight: 700; }
+  td.no { color: var(--text-muted); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .pill.role { background: var(--accent-soft); color: var(--accent); }
+  .pill.draft { background: var(--surface-raised); color: var(--text-muted); }
+  .pill.review { background: var(--info-soft); color: var(--info); }
+  .pill.active { background: var(--success-soft); color: var(--success); }
+  .pill.danger { background: var(--danger-soft); color: var(--danger); }
+
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+    margin: 18px 0 28px;
+  }
+  .role-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 16px 14px;
+  }
+  .role-card h4 { margin: 0 0 8px; color: var(--text); font-family: var(--font-display); font-size: 17px; text-transform: none; letter-spacing: 0; }
+  .role-card .tagline { font-size: 12.5px; color: var(--text-muted); margin: 0 0 10px; }
+  .role-card ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .role-card li { margin-bottom: 3px; }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: var(--surface-raised);
+  }
+
+  button.btn-ref {
+    font: inherit;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text);
+    cursor: default;
+  }
+  button.btn-ref.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  button.btn-ref.danger { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); color: var(--danger); }
+
+  footer.manual-footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 40px 60px;
+    color: var(--text-muted);
+    font-size: 13px;
+    max-width: 840px;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 8px 20px 80px; }
+    header.masthead { padding: 28px 20px 20px; }
+  }
+</style>
+
+<div class="shell">
+  <header class="masthead" style="grid-column: 1 / -1;">
+    <span class="eyebrow">Example Corp Systems &middot; Enterprise DMS</span>
+    <h1>DMS User Manual</h1>
+    <p>A working reference for every role in the Document Management System — how documents move from draft to archive, who can do what, and where to click. Written from a live pass through the app: every screen, button, and modal described here was actually opened and used.</p>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <p class="toc-title">Start here</p>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#getting-started">Getting started</a></li>
+      <li><a href="#roles">Roles &amp; permissions</a></li>
+    </ul>
+    <p class="toc-title">Working with documents</p>
+    <ul>
+      <li><a href="#documents">Documents</a></li>
+      <li class="sub"><a href="#uploading">Uploading</a></li>
+      <li class="sub"><a href="#document-detail">The document page</a></li>
+      <li class="sub"><a href="#checkout">Check-out &amp; versions</a></li>
+      <li><a href="#approvals">Approvals</a></li>
+      <li class="sub"><a href="#submitting">Submitting for approval</a></li>
+      <li class="sub"><a href="#deciding">Deciding a step</a></li>
+      <li class="sub"><a href="#recovery">Reassign &amp; cancel</a></li>
+      <li><a href="#mywork">My Work</a></li>
+      <li><a href="#forms">Forms</a></li>
+      <li><a href="#esigning">E-Signing</a></li>
+      <li><a href="#letters">Letters (CAMS)</a></li>
+      <li><a href="#bundles-trash">Bundles &amp; Recycle Bin</a></li>
+    </ul>
+    <p class="toc-title">Finding &amp; governing</p>
+    <ul>
+      <li><a href="#search-ai">Search &amp; AI Assistant</a></li>
+      <li><a href="#notifications">Notifications &amp; live updates</a></li>
+      <li><a href="#legal-hold">Legal hold &amp; retention</a></li>
+      <li><a href="#audit">Audit trail &amp; reports</a></li>
+    </ul>
+    <p class="toc-title">Administration</p>
+    <ul>
+      <li><a href="#operations">Operations console</a></li>
+    </ul>
+    <p class="toc-title">Reference</p>
+    <ul>
+      <li><a href="#role-reference">Role quick-reference</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <section id="overview">
+      <h2><span class="num">§1</span> Overview</h2>
+      <p class="lede">DMS (internally also called EDAMS in some backend identifiers — this is deliberate, not a typo) is Example Corp's document and records management system: upload, review, approve, sign, retain, and eventually dispose of documents, letters, and filled forms under one audit trail.</p>
+
+      <p>Every document moves through a small set of states as it's worked on:</p>
+      <p>
+        <span class="pill draft">Draft</span> →
+        <span class="pill review">In Review</span> →
+        <span class="pill active">Active</span> →
+        <span class="pill draft" style="background:var(--surface-raised)">Archived</span>
+      </p>
+      <p>A document in <strong>Draft</strong> is only visible to its owner and admins. Submitting it for approval moves it to <strong>In Review</strong>, where an approval chain of one or more steps decides its fate — approved steps advance the chain; a decline or a request for changes sends it back to Draft. Once every step approves, it becomes <strong>Active</strong> (published) and everyone with read access can see it. From there it can be archived, put on legal hold, checked out for a new version, or eventually staged for retention disposal.</p>
+
+      <p>The same organization is multi-tenant: your account can belong to more than one tenant (for example "Example Corp" and "Demo Org"), and everything you see — documents, folders, users — is scoped to whichever tenant you're currently working in.</p>
+    </section>
+
+    <section id="getting-started">
+      <h2><span class="num">§2</span> Getting started</h2>
+
+      <h3>Signing in</h3>
+      <ol class="steps">
+        <li>Open the DMS sign-in page. In production this hands off to Example Corp's shared identity provider (SSO); pick <strong>Sign in with Example Corp SSO</strong> if that's how your account is provisioned.</li>
+        <li>Enter your email and password (or select your account from the demo list, in a development environment) and choose <strong>Sign in</strong>.</li>
+        <li>If your account has two-factor authentication enabled, you'll be asked for a 6-digit code from your authenticator app before the session completes.</li>
+      </ol>
+
+      <h3>Choosing a tenant</h3>
+      <p>If your account belongs to more than one tenant, you'll land on a tenant picker after signing in — pick the organization you want to work in. You can switch tenants later from the switcher at the top of the sidebar without signing out.</p>
+
+      <div class="callout note">
+        <span class="icon">i</span>
+        <p>Everything you do — uploads, approvals, searches — is scoped to your current tenant. A document that exists in "Demo Org" won't appear while you're working in "Example Corp," even if you technically have access to both.</p>
+      </div>
+    </section>
+
+    <section id="roles">
+      <h2><span class="num">§3</span> Roles &amp; permissions</h2>
+      <p class="lede">DMS ships with seven roles. What you see in the sidebar — and which buttons are active rather than hidden — is driven entirely by your role's permissions, not by guesswork in the UI.</p>
+
+      <div class="role-grid">
+        <div class="role-card">
+          <h4>System Admin</h4>
+          <p class="tagline">Full access, every permission</p>
+          <ul><li>Everything below the line, plus the Operations console in full</li></ul>
+        </div>
+        <div class="role-card">
+          <h4>Records Officer</h4>
+          <p class="tagline">Records &amp; retention specialist</p>
+          <ul><li>Upload, archive, purge documents</li><li>Retention &amp; legal hold management</li><li>Approval admin (reassign/cancel chains)</li></ul>
+        </div>
+        <div class="role-card">
+          <h4>Dept Manager</h4>
+          <p class="tagline">Runs a department</p>
+          <ul><li>Manage their department &amp; its users/roles</li><li>Approve documents and letters</li><li>Approval admin within their scope</li></ul>
+        </div>
+        <div class="role-card">
+          <h4>Approver</h4>
+          <p class="tagline">Workflow approvals only</p>
+          <ul><li>Read documents, decide approval steps</li><li>Review/approve letters</li><li>No upload, no admin actions</li></ul>
+        </div>
+        <div class="role-card">
+          <h4>Employee</h4>
+          <p class="tagline">Read &amp; upload</p>
+          <ul><li>Upload, check out, submit for approval</li><li>Create letters and fill forms</li><li>No department or user administration</li></ul>
+        </div>
+        <div class="role-card">
+          <h4>Auditor</h4>
+          <p class="tagline">Audit log access</p>
+          <ul><li>Read every document tenant-wide (read-only)</li><li>Audit trail, retention &amp; legal-hold visibility</li><li>Decide audit-stage reviews</li></ul>
+        </div>
+        <div class="role-card">
+          <h4>Chief Executive</h4>
+          <p class="tagline">Correspondence oversight</p>
+          <ul><li>Read-only across all letters, tenant-wide</li><li>No document module access by default</li><li>Standing recipient for oversight notifications</li></ul>
+        </div>
+      </div>
+
+      <div class="callout note">
+        <span class="icon">i</span>
+        <p>A <strong>role</strong> gives you a bundle of permissions; an admin can additionally grant or restrict access to a specific folder or department through an <strong>ACL entry</strong>, and legal hold or retention rules can block an action regardless of your role. If a button is greyed out that you expect to use, one of these three layers is usually why — see <a href="#troubleshooting">Troubleshooting</a>.</p>
+      </div>
+
+      <p>Jump to the <a href="#role-reference">full role reference table</a> for a permission-by-permission breakdown.</p>
+    </section>
+
+    <section id="documents">
+      <h2><span class="num">§4</span> Documents</h2>
+      <p class="lede">The document is the core object in DMS — everything else (approvals, signatures, retention, audit) attaches to one.</p>
+
+      <h3 id="uploading">Uploading a document</h3>
+      <ol class="steps">
+        <li>Choose <strong>Upload</strong> in the sidebar.</li>
+        <li>Drop a file onto the upload zone, or click it to browse. One file at a time when you also want to set a title; multiple files skip straight to bulk metadata.</li>
+        <li>Fill in the required fields: <strong>Title</strong>, <strong>Department</strong>, <strong>Document Type</strong>, and a <strong>retention trigger date</strong> (the date retention counting starts from — often the document's own date, sometimes contract end date, depending on type).</li>
+        <li>Optionally add a description, tags, a reference number, and a geographic/organizational scope.</li>
+        <li>Review the summary step and confirm. The document is created in <span class="pill draft">Draft</span>, owned by you.</li>
+      </ol>
+      <div class="callout note">
+        <span class="icon">i</span>
+        <p>Filenames are sanitized when stored — special characters are stripped from the internal storage key — but the name you see everywhere in the UI is always your original filename. Uploading <code>Q3 Report (final) [v2].pdf</code> works exactly as expected; nothing is silently rejected.</p>
+      </div>
+
+      <h3 id="document-detail">The document page</h3>
+      <p>Opening any document lands you on its detail page, organized into tabs: <strong>Overview</strong>, <strong>File</strong>, <strong>Versions</strong>, <strong>Comments</strong>, <strong>Workflow</strong>, <strong>Audit Trail</strong>, and <strong>Governance</strong>. The action buttons across the top change based on the document's current state and your permissions:</p>
+
+      <div class="table-wrap">
+      <table>
+        <tr><th>Button</th><th>Appears when</th><th>What it does</th></tr>
+        <tr><td><button class="btn-ref">Download</button></td><td>Always (if you can read the document)</td><td>Downloads the current version's file.</td></tr>
+        <tr><td><button class="btn-ref">Add to Bundle</button></td><td>Always</td><td>Attaches this document to a bundle (a named collection, e.g. for a case file or a board pack).</td></tr>
+        <tr><td><button class="btn-ref primary">Check Out</button></td><td>Status is Draft, Active, In Review, or Published, and it's not on legal hold</td><td>Locks the document to you and opens the way to upload a new version.</td></tr>
+        <tr><td><button class="btn-ref primary">New Version</button></td><td>You (or an admin) hold the checkout</td><td>Uploads a new file as the next version.</td></tr>
+        <tr><td><button class="btn-ref">Cancel Checkout</button></td><td>You (or an admin) hold the checkout</td><td>Releases your own checkout without uploading anything.</td></tr>
+        <tr><td><button class="btn-ref danger">Force Unlock</button></td><td>The document is checked out (by anyone) and you hold department-management or admin-bypass rights</td><td>Admin recovery: releases <em>someone else's</em> stuck checkout. Requires a written reason (kept on the audit log).</td></tr>
+        <tr><td><button class="btn-ref">Archive</button></td><td>Status is Active or Signed</td><td>Moves the document to Archived.</td></tr>
+        <tr><td><button class="btn-ref">Discard</button></td><td>Status is Draft</td><td>Cancels the draft. Asks for confirmation first — this can't be undone from the UI.</td></tr>
+        <tr><td><button class="btn-ref primary">Publish</button></td><td>Draft, and the document type is configured to skip approval</td><td>Publishes directly to Active without going through an approval chain.</td></tr>
+      </table>
+      </div>
+
+      <div class="callout verified">
+        <span class="icon">✓</span>
+        <p><strong>Verified this session:</strong> Force Unlock now correctly releases the checkout it's shown next to. (Earlier it only cleared an unrelated, legacy lock record that nothing in the app ever creates — clicking it always failed with "Document is not locked." That's fixed.)</p>
+      </div>
+
+      <h3 id="checkout">Check-out &amp; versions</h3>
+      <p>Only one person can hold the checkout on a document at a time. While checked out, everyone else can still read the current published version, but can't check it out themselves or start a new one. Uploading through <strong>New Version</strong> asks for a brief change summary and whether the change is major or minor; the new file becomes the current version and, for approval-required types, may drop the document back to Draft for re-approval if it was already Active.</p>
+      <p>The <strong>Versions</strong> tab lists every version with its number, uploader, and date, and lets an authorized user roll a document back to an earlier version if needed.</p>
+    </section>
+
+    <section id="approvals">
+      <h2><span class="num">§5</span> Approvals</h2>
+      <p class="lede">DMS documents, filled forms, and form templates all share one approval engine — a chain of one or more steps, each either a plain review or a final approve, each assigned to a role or to a specific named person.</p>
+
+      <h3 id="submitting">Submitting for approval</h3>
+      <ol class="steps">
+        <li>Open the document and go to its <strong>Workflow</strong> tab.</li>
+        <li>Choose <strong>Submit for approval</strong>. If the document type has a standard chain template, its steps pre-fill; any locked step (marked with a lock icon) is mandatory and can't be removed or reordered.</li>
+        <li>For each unlocked step, pick a step type (Review or Approve), then either a role (e.g. "Dept Manager") or a named person from the picker. The last step in the chain must always be an Approve.</li>
+        <li>Add more steps with <strong>Add step</strong> if the type calls for more than one reviewer, then choose <strong>Submit</strong>.</li>
+      </ol>
+      <p>The document moves to <span class="pill review">In Review</span> and the first step's assignee is notified immediately.</p>
+
+      <h3 id="deciding">Deciding a step</h3>
+      <p>If a step is assigned to your role or to you by name, its card on the Workflow tab shows <strong>Approve</strong>, <strong>Request changes</strong>, and <strong>Decline</strong>:</p>
+      <ul>
+        <li><strong>Approve</strong> — advances to the next step, or, if it was the last one, publishes the document. An optional comment; on the final step you may also be asked to pick an auditor if the document type requires a post-approval audit pass.</li>
+        <li><strong>Request changes</strong> — sends the document back to Draft for the author to revise and resubmit. A comment is optional but recommended.</li>
+        <li><strong>Decline</strong> — a hard rejection. Requires a written reason.</li>
+      </ul>
+
+      <h3 id="recovery">Reassign &amp; cancel (admin recovery)</h3>
+      <p>Anyone holding approval-admin rights (System Admin, Records Officer, Dept Manager) sees two extra controls on a running chain:</p>
+      <ul>
+        <li><strong>Reassign</strong> — on a pending step that isn't assigned to you, moves it to a different capable user. Requires a short reason.</li>
+        <li><strong>Cancel chain</strong> — stops the whole chain and returns the document to Draft. Requires a reason of at least 10 characters; this can't be undone.</li>
+      </ul>
+      <div class="callout verified">
+        <span class="icon">✓</span>
+        <p><strong>Verified this session:</strong> both open as proper in-app dialogs (title, description, Escape-to-close) rather than the browser's own prompt/confirm boxes — reassigning moves the step and notifies the new assignee; cancelling reverts the document and notifies the original submitter with the reason given.</p>
+      </div>
+    </section>
+
+    <section id="mywork">
+      <h2><span class="num">§6</span> My Work</h2>
+      <p class="lede">One inbox for everything currently waiting on you: approval steps (documents, forms, and letters), signature requests, audit-stage reviews, and incoming correspondence assigned to you.</p>
+      <p>Each card links straight to where you act on it — an approval step opens the document's Workflow tab, a letter opens the letter, a signature request opens the signing page. The four counters at the top (<strong>Approvals</strong>, <strong>Signatures</strong>, <strong>Audits</strong>, <strong>Assigned correspondence</strong>) update the moment something new arrives — you don't need to refresh the page.</p>
+      <div class="callout verified">
+        <span class="icon">✓</span>
+        <p><strong>Verified &amp; fixed this session:</strong> My Work now updates live when a new approval step, signature request, or letter step lands on you. Previously it only refreshed on a 60-second timer or a manual reload — a step assigned to someone outside the document's own department could take a full minute to appear.</p>
+      </div>
+    </section>
+
+    <section id="forms">
+      <h2><span class="num">§7</span> Forms</h2>
+      <p class="lede">Structured, fillable templates (leave requests, expense claims, and the like) that produce a real document once submitted, and can be routed through the same approval engine as any other document.</p>
+      <ul>
+        <li><strong>Templates</strong> — browse the forms available to fill.</li>
+        <li><strong>Fill a Form</strong> — pick a template, complete its fields, and submit. A filled form is stored as its own document (with a link back to the template) and follows the normal Draft → In Review → Active lifecycle.</li>
+        <li><strong>My Submissions</strong> — every form you've filled, with its current status.</li>
+      </ul>
+    </section>
+
+    <section id="esigning">
+      <h2><span class="num">§8</span> E-Signing</h2>
+      <p class="lede">Legally-binding signature ceremonies on a document, separate from (and usually happening after) the approval chain — a document can require approval, a signature, both, or neither depending on its type.</p>
+      <ul>
+        <li><strong>New Request</strong> — pick a document, add one or more recipients (internal DMS users or external email addresses), and send. Internal recipients see the request appear in My Work and their Pending queue; external recipients get an emailed signing link.</li>
+        <li><strong>Pending My Signature</strong> — requests waiting on you. Opening one shows the document and a signature pad / typed-signature option.</li>
+        <li><strong>Sent for Signature</strong> — requests you sent, with each recipient's status (pending, signed, declined).</li>
+        <li><strong>Completed</strong> — finished ceremonies. The final signed copy is filed back onto the document as a flattened, tamper-evident PDF.</li>
+      </ul>
+      <p>Declining a signature request requires a reason, and immediately notifies whoever sent it. A document already on legal hold can't be signed until the hold is released.</p>
+    </section>
+
+    <section id="letters">
+      <h2><span class="num">§9</span> Letters (CAMS)</h2>
+      <p class="lede">Correspondence management — incoming and outgoing letters, each with its own reference number, priority, and (for outgoing letters) its own review/approve/dispatch chain, independent of the document approval engine.</p>
+      <ul>
+        <li><strong>Incoming</strong> letters are registered on receipt and assigned to a person or department to respond to; overdue ones are flagged wherever they appear (My Work, the Letters list).</li>
+        <li><strong>Outgoing</strong> letters move through Draft → Review → Approved → Registered → Dispatched, mirroring the document chain in spirit but with its own step assignments.</li>
+        <li>The <strong>Chief Executive</strong> role is a standing, tenant-wide, read-only recipient for correspondence — an oversight seat, not a participant in any chain.</li>
+      </ul>
+    </section>
+
+    <section id="bundles-trash">
+      <h2><span class="num">§10</span> Bundles &amp; Recycle Bin</h2>
+      <h3>Bundles</h3>
+      <p>A bundle groups related documents under one name — a case file, a board pack, a due-diligence set — without moving or copying the underlying documents. Add documents to a bundle from any document's <strong>Add to Bundle</strong> button, or build one from scratch under <strong>Bundles</strong> in the sidebar.</p>
+      <h3>Recycle Bin</h3>
+      <p>Deleted documents land in the Recycle Bin before they're gone for good. From there an authorized user can restore a document or, for a records officer or admin, permanently purge it — purging is a deliberate two-person action: one person stages it, a different person (officer or admin) must approve the actual destruction.</p>
+    </section>
+
+    <section id="search-ai">
+      <h2><span class="num">§11</span> Search &amp; AI Assistant</h2>
+      <p>Full-text and metadata search across everything you have read access to, with filters for department, document type, status, and date range. <strong>AI Assistant</strong> adds document summarization and metadata suggestions — open a document and use <strong>Summarize</strong> or <strong>Suggest metadata</strong> from its Overview tab, or ask a question directly from the Assistant page.</p>
+    </section>
+
+    <section id="notifications">
+      <h2><span class="num">§12</span> Notifications &amp; live updates</h2>
+      <p>The bell icon in the top bar holds every notification you've received — a step assigned to you, a decision on something you submitted, a signature completed, a legal hold released. Most of the app also updates itself live: a second person watching the same document's Workflow tab sees a decision the moment it happens, with no reload needed.</p>
+      <p>You can turn off specific email notification types (for instance, legal-hold releases) from <strong>Settings</strong> without affecting what shows up in the bell or on-screen.</p>
+    </section>
+
+    <section id="legal-hold">
+      <h2><span class="num">§13</span> Legal hold &amp; retention</h2>
+      <h3>Legal hold</h3>
+      <p>Placing a document on legal hold freezes it — no new version, no signature, no disposal — until the hold is explicitly released, regardless of what its retention schedule says. Only Records Officers and admins can apply or release a hold, and every document affected is logged with the reason.</p>
+      <h3>Retention</h3>
+      <p>Every document type carries a retention period counted from its trigger date. When that period lapses, the document is staged for disposal in the <strong>Lifecycle Queue</strong>; disposal only actually runs after a records officer or admin authorizes it — never automatically — and a document on legal hold is skipped regardless of how overdue it is.</p>
+    </section>
+
+    <section id="audit">
+      <h2><span class="num">§14</span> Audit trail &amp; reports</h2>
+      <p>Every meaningful action — upload, checkout, decision, download, hold, disposal — is written to an append-only audit log (the database itself refuses updates or deletes on it, not just the application). A document's own <strong>Audit Trail</strong> tab shows its history; <strong>Reports &amp; Analytics</strong> and the Operations console's <strong>Audit Logs</strong> panel give the tenant-wide view, available to Auditors, Records Officers, Dept Managers, and admins.</p>
+    </section>
+
+    <section id="operations">
+      <h2><span class="num">§15</span> Operations console</h2>
+      <p class="lede">Administrative panels, each gated on its own permission — most are visible only to a System Admin, but several are also open to a Dept Manager or Records Officer within their own scope.</p>
+
+      <div class="table-wrap">
+      <table>
+        <tr><th>Panel</th><th>Who</th><th>Purpose</th></tr>
+        <tr><td>Manager Hub</td><td>Dept Manager, Admin</td><td>Single view of a department's people, documents, and open work.</td></tr>
+        <tr><td>Compliance Reports / Audit Logs / Chain Integrity</td><td>Auditor, Officer, Manager, Admin</td><td>Tenant-wide audit visibility and tamper-evidence checks.</td></tr>
+        <tr><td>Users / Role Editor / Access Control</td><td>Admin (Manager for Users within their dept)</td><td>Create users, edit role→permission grants, set folder/department ACL entries.</td></tr>
+        <tr><td>Tenants / Organization / Departments / Hierarchy Browser</td><td>Admin</td><td>Tenant, org unit, and department structure.</td></tr>
+        <tr><td>Folders / Document Types</td><td>Officer, Admin</td><td>Folder tree and the document-type catalog (retention period, approval requirement, audit policy per type).</td></tr>
+        <tr><td>Workflow Queue / Definitions / Approval Chains</td><td>Manager, Officer, Admin</td><td>Live queue of running chains and the reusable chain templates per document type.</td></tr>
+        <tr><td>Lifecycle Queue / Retention Policies</td><td>Officer, Admin</td><td>Disposal staging and authorization; retention period configuration.</td></tr>
+        <tr><td>Legal Holds</td><td>Officer, Admin</td><td>Apply and release holds.</td></tr>
+        <tr><td>System Health / Outbox Queue / Webhooks / Crypto-KEK Status</td><td>Admin</td><td>Infrastructure status: background job health, the event-delivery queue, outbound webhook config, encryption-key rotation state.</td></tr>
+        <tr><td>Feature Flags</td><td>Admin (tenant-manage)</td><td>Per-tenant feature toggles.</td></tr>
+      </table>
+      </div>
+    </section>
+
+    <section id="role-reference">
+      <h2><span class="num">§16</span> Role quick-reference</h2>
+      <p class="lede">A permission-level view of the seven roles. <span class="pill role">●</span> means the role holds that permission by default; an admin can still widen or narrow any individual user's access with an ACL entry.</p>
+
+      <div class="table-wrap">
+      <table>
+        <tr>
+          <th>Capability</th><th>Admin</th><th>Records&nbsp;Officer</th><th>Dept&nbsp;Manager</th><th>Approver</th><th>Employee</th><th>Auditor</th><th>Executive</th>
+        </tr>
+        <tr><td>Read documents</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td></tr>
+        <tr><td>Read <em>every</em> document tenant-wide</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td></tr>
+        <tr><td>Upload / check out</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Archive / purge</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Submit for approval</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Decide an approval step</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Reassign / cancel a chain (admin)</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Decide an audit-stage review</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td></tr>
+        <tr><td>Manage retention / legal hold</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Manage a department &amp; its users</td><td class="yes">●</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Read letters (department-scoped)</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Read <em>every</em> letter tenant-wide</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">●</td><td class="yes">●</td></tr>
+        <tr><td>Create / dispatch letters</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="yes">create only</td><td class="no">—</td><td class="no">—</td></tr>
+        <tr><td>Sign / receive signature requests</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td></tr>
+        <tr><td>Operations console (system-wide panels)</td><td class="yes">●</td><td class="no">partial</td><td class="no">partial</td><td class="no">—</td><td class="no">—</td><td class="no">partial</td><td class="no">—</td></tr>
+      </table>
+      </div>
+
+      <div class="callout note">
+        <span class="icon">i</span>
+        <p>Executive has no document-read permission by design — it's an oversight seat for correspondence, not a document-module user. Its Dashboard and Settings links still work; every document-specific widget on those pages is simply empty for that role, which is expected.</p>
+      </div>
+    </section>
+
+    <section id="troubleshooting">
+      <h2><span class="num">§17</span> Troubleshooting</h2>
+
+      <h3>"I don't see a button/tab I expect"</h3>
+      <p>Check three things in order: (1) your role's permissions — see the <a href="#role-reference">reference table</a>; (2) whether an admin has scoped your access to specific folders or departments via an ACL entry; (3) the document's own state — many actions (Check Out, Publish, Discard) only appear for specific statuses.</p>
+
+      <h3>"Force Unlock / Reassign / Cancel chain says nothing happened"</h3>
+      <p>These are admin-only recovery actions and always require a written reason of a minimum length — if the button looks disabled, type a longer reason first. All three write to the audit log, so there's a record of who released or redirected what, and why.</p>
+
+      <h3>"I approved something but the other approver still sees it as pending"</h3>
+      <p>This should update within a second or two without a page reload. If it doesn't, check your connection — the live-update channel (a WebSocket) needs a stable connection; a reload always shows the current state regardless.</p>
+
+      <h3>"A document I need to edit is locked"</h3>
+      <p>Someone else holds its checkout. Ask them to use <strong>Cancel Checkout</strong>, or, if they're unavailable, ask a Dept Manager or admin to use <strong>Force Unlock</strong> with a reason.</p>
+
+      <h3>"I can't sign or move a document"</h3>
+      <p>Check whether it's on legal hold (shown near the top of the document page) — a hold blocks new versions, signing, and disposal until a Records Officer or admin releases it.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer class="manual-footer">
+  DMS User Manual — Example Corp Systems. Written against the live application; screens and labels described here reflect what's actually on screen, not the underlying code names.
+</footer>

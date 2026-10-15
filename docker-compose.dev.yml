@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    # R-01 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): max_connections raised above the
+    # image default of 100. tenantContext holds one connection for the full
+    # lifetime of every authenticated request, so DB_POOL_MAX (now 60) is a
+    # hard cap on concurrent authenticated requests — and the API process and
+    # the BullMQ worker share this Sequelize config, so each can reach 60 for
+    # 120 potential connections against a 100 default. Add the migration job,
+    # a jest run and a psql session and "too many clients already" is a local
+    # dev failure waiting to happen.
+    #
+    # If you run Postgres locally rather than through this compose file, apply
+    # the same change there: ALTER SYSTEM SET max_connections = 200; then
+    # restart the server.
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: change-me-dev-password
+      POSTGRES_DB: DMS
+    ports: ["5432:5432"]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    # Platform audit finding 4.9: without AOF persistence, a crash/restart
+    # loses whatever wasn't in the last RDB snapshot — including the auth
+    # revocation cutoffs / jti blacklist auth.ts keeps only in Redis, and any
+    # outbox-dispatched job sitting in queue. Matches docker-compose.prod.yml
+    # and GMS's own dev compose, both of which already set this.
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
+
+  minio:
+    # MinIO stopped publishing images to Docker Hub (minio/minio) — the
+    # registry now serving actual pulls is quay.io. Same exact release tag,
+    # just the correct host; verified this tag exists at quay.io before
+    # pinning it here.
+    image: quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [minio_data:/data]
+
+  meilisearch:
+    # Pinned to match this platform's already-provisioned local Meilisearch
+    # data (previously ran unpinned :latest, which had already migrated the
+    # on-disk index to 1.53.x's format) -- an older pin here fails outright
+    # with "database version is incompatible with engine version" instead of
+    # silently downgrading, so the pin must be >= whatever :latest last was.
+    # Bumped 1.53.0 -> 1.53.1 on 2026-09-21: the on-disk index had drifted to
+    # 1.53.1 again (still unclear how -- nothing in this repo runs :latest
+    # anymore), and 1.53.0 refused to start against it with the same
+    # incompatible-version error the comment above already warns about.
+    image: getmeili/meilisearch:v1.53.1
+    environment:
+      MEILI_MASTER_KEY: devmasterkey123
+      MEILI_ENV: development
+    # Host port remapped 7700 -> 9700 on 2026-09-21: 7700 sits inside a
+    # Windows TCP excluded-port range (netsh int ipv4 show excludedportrange
+    # shows 7680-7779 reserved, almost certainly by Hyper-V/WSL NAT), which
+    # makes bind() fail with WSAEACCES ("forbidden by its access
+    # permissions") — not a Docker or app bug, an OS-level reservation.
+    # Container-side port is unchanged; only the host mapping moved.
+    ports: ["9700:7700"]
+    volumes: [meili_data:/meili_data]
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports: ["1025:1025", "8025:8025"]
+
+  clamav:
+    image: clamav/clamav:1.5.4_base-debian13-slim
+    ports: ["3310:3310"]
+    volumes: [clamav_data:/var/lib/clamav]
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  meili_data:
+  clamav_data:

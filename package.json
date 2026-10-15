@@ -1,0 +1,30 @@
+{
+  "name": "dms",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm --workspace backend run dev\" \"npm --workspace frontend run dev\"",
+    "build": "npm --workspace backend run build && npm --workspace frontend run build",
+    "typecheck": "npm --workspace backend run typecheck && npm --workspace frontend run typecheck",
+    "test": "npm --workspace backend test",
+    "test:status": "node tools/generate-test-status.mjs backend/test-results.json Documentations/TEST_STATUS.md DMS",
+    "audit:gate": "node tools/audit-gate.mjs",
+    "containers:check-pins": "node tools/check-compose-image-pins.mjs",
+    "verify:ci": "node tools/run-backend-verifications.mjs",
+    "seed": "npm --workspace backend run db:seed:core",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "concurrently": "^8.2.2",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}

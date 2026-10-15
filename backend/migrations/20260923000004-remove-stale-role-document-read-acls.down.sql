@@ -1,0 +1,6 @@
+-- Intentionally irreversible security cleanup.
+--
+-- Recreating these rows would reintroduce the cross-department document leak
+-- this migration exists to remove. The corrected application grants access by
+-- owner/department membership (or an explicit, intentional user grant), so a
+-- rollback must not restore the obsolete tenant-wide role grants.

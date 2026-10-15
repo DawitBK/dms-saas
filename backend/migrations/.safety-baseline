@@ -1,0 +1,52 @@
+# Migrations that existed before the migration-safety check (see
+# scripts/check-migration-safety.ts) was introduced. Everything listed here
+# is grandfathered — the check only applies to migrations added AFTER this
+# snapshot was taken, not retroactively to history. Never add to this file
+# again; it's a one-time cutover marker, not something you update per release.
+20260610000000-baseline.sql
+20260611000001-create-acl-entries.sql
+20260611000002-folders-ltree.sql
+20260611000003-sprint4-models.sql
+20260615000002-rls-policies.sql
+20260615000010-perf-indexes.sql
+20260619000000-create-tenants.sql
+20260619000001-add-tenant-id-to-missing-tables.sql
+20260622000001-add-trigram-composite-indexes.sql
+20260624000001-add-plaintext-hash.sql
+20260624000002-folder-partial-unique-index.sql
+20260625000001-add-audit-sequence-unique.sql
+20260625000002-add-document-date.sql
+20260626000001-department-nesting.sql
+20260626000002-access-rules.sql
+20260626000003-role-permissions.sql
+20260627000000-access-rules.sql
+20260628000001-user-tenants.sql
+20260628000002-add-department-id-to-document-types.sql
+20260629000001-document-comments.sql
+20260701000001-fix-document-name-tenant-scoped.sql
+20260701000002-phase5-phase6.sql
+20260701000003-idp-role-mappings.sql
+20260701000004-forms-engine.sql
+20260701000005-esigning.sql
+20260702000001-cams-foundation.sql
+20260702000002-cams-correspondence-doctype.sql
+20260702000003-audit-tenant-id.sql
+20260703000001-forms-doctype.sql
+20260703000002-doc-pre-trash-status.sql
+20260703000003-letters-indexes.sql
+20260703000004-letter-responded-status.sql
+20260703000005-document-bundles.sql
+20260703000006-notifications-letter-id.sql
+20260703000007-esigning-document-completion.sql
+20260703000008-rls-app-role.sql
+20260703000009-rls-drop-postgres-bypass.sql
+20260703000010-rls-cams-tables.sql
+20260704000001-form-templates-sections.sql
+20260704000002-department-org-unit.sql
+20260705000001-user-external-sub.sql
+20260707000001-flatten-org-units.sql
+20260709000001-document-dek-per-version.sql
+20260709000002-outbox-processing-started-at.sql
+20260709000003-doc-locks-unique-document-id.sql
+20260710000001-rls-remaining-tenant-tables.sql
+20260711000001-outbox-webhook-fanout-idempotency.sql

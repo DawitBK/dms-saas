@@ -1,0 +1,77 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.next
+.next-mirror
+frontend/.next-release-*
+coverage
+uploads
+*.local
+.env
+.env.*
+!.env.example
+!.env.development.example
+!.env.prod.example
+
+# EDAMS generated runtime logs
+backend/*.log
+frontend/*.log
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Runtime document storage (user-uploaded encrypted blobs — not source)
+backend/storage/
+backend/storage-mirror/
+
+# Claude Code local tooling config
+.claude/
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+**/test-results.json
+
+# tesseract.js downloads its OCR language model to CWD on first use
+backend/*.traineddata
+
+# Redis snapshot — written to CWD by whichever redis-server process is
+# running locally (e.g. a dev-environment WSL instance), not source
+*.rdb
+e2e/.auth/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Backups: pg_dump output and a full mirror of the document store.
+# Never committable — this is the corpus itself, plus decryptable metadata.
+backups/
+
+# Next 16 scaffolding: generated in the app dir on every `next dev`, and the
+# CLAUDE.md is only "@AGENTS.md". Not repo docs — DMS/CLAUDE.md stays tracked.
+/frontend/AGENTS.md
+/frontend/CLAUDE.md
+e2e/qa-shots/
+
+# The company directory exported for name matching (names and work addresses of staff): never committed.
+Collected-Data/.sso-directory.json
+
+# Office lock files (an open Excel/Word document)
+~$*

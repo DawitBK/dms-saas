@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS audit_stage_reviews;
+DROP TABLE IF EXISTS approval_steps;
+DROP TABLE IF EXISTS approval_chains;
+DROP TABLE IF EXISTS approval_chain_templates;
+ALTER TABLE document_types DROP COLUMN IF EXISTS audit_policy;
+ALTER TABLE document_types DROP COLUMN IF EXISTS signing_policy;
+ALTER TABLE document_types DROP COLUMN IF EXISTS reapproval_policy;
+ALTER TABLE users DROP COLUMN IF EXISTS signature_image;
+ALTER TABLE users DROP COLUMN IF EXISTS exec_notice_opt_out;
+ALTER TABLE form_templates DROP COLUMN IF EXISTS instance_approval;
+ALTER TABLE tenants DROP COLUMN IF EXISTS exec_notice_config;
