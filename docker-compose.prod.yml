@@ -100,6 +100,9 @@ x-backend-env: &backend-env
   LICENSE_ENFORCEMENT: ${LICENSE_ENFORCEMENT:-enforce}
   LICENSE_SSO_URL: ${LICENSE_SSO_URL:-}
   LICENSE_POLL_SECONDS: ${LICENSE_POLL_SECONDS:-300}
+  # Per-application entitlement (contract section 9): required by default in production; the ONLY keys that may sign a licence.
+  LICENSE_REQUIRED: ${LICENSE_REQUIRED:-true}
+  LICENSE_TRUST_PUBLIC_KEYS: ${LICENSE_TRUST_PUBLIC_KEYS:-}
 
 services:
   migrate:

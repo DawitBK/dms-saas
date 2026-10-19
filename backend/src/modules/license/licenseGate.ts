@@ -5,13 +5,17 @@
  * `/operations` and `/internal` routers, and in front of the TUS upload endpoint in app.ts. Because it runs
  * before authentication it never reads `req.user`: the licence state is installation-wide and public.
  *
- * Order: module gate first (a disabled module answers 403 LICENSE_MODULE_DISABLED for EVERY method, reads
+ * Entitlement first (contract section 9): LICENSE_REQUIRED on and no entitling licence (none held, or one whose
+ * `modes` lacks this deployment's mode) means EVERY request except the exempt list answers 403 LICENSE_REQUIRED.
+ * Nothing is deleted or deactivated; installing a valid token restores service within one request.
+ *
+ * Then the expiry rules. Order: module gate (a disabled module answers 403 LICENSE_MODULE_DISABLED for EVERY method, reads
  * included, so the UI can tell "not licensed" from "read-only"), then the read-only guard (state `expired`
  * only; POST/PUT/PATCH/DELETE refused with 403 LICENSE_EXPIRED unless allowlisted). Safe methods always pass
  * the read-only guard.
  *
  * `LICENSE_ENFORCEMENT=warn` evaluates everything and logs what it WOULD have refused, but refuses nothing.
- * `off`, `unconfigured` and `unknown` never refuse.
+ * `off` never refuses. With LICENSE_REQUIRED off, `unconfigured` and `unknown` never refuse either.
  */
 import type { NextFunction, Request, Response } from "express";
 import { config } from "../../config/env.js";
@@ -20,6 +24,7 @@ import { logger } from "../../core/logger.js";
 import {
   LICENSE_ERROR,
   LICENSE_EXPIRED_MESSAGE,
+  LICENSE_REQUIRED_MESSAGE,
   MODULE_DISABLED_MESSAGE,
   type LicenseModuleKey,
 } from "./license.constants.js";
@@ -55,6 +60,32 @@ export const READ_ONLY_ALLOWLIST: readonly AllowEntry[] = [
 export function isAllowlisted(method: string, relPath: string): boolean {
   const m = method.toUpperCase();
   return READ_ONLY_ALLOWLIST.some((e) => (e.method === "*" || e.method === m) && e.pattern.test(relPath));
+}
+
+// ── entitlement exemptions ────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * What still answers while the system is required but unlicensed (contract section 9): health and readiness (the
+ * uptime monitor must not see an outage), the licence status and install routes (how a licence gets in), and the
+ * sign-in endpoints (login, refresh, logout, me, the OIDC callback and authorize start, back-channel logout; the
+ * whole /auth tree, so the tenant and role selection and 2FA steps of a sign-in are not cut off halfway). Static
+ * assets are served by the frontend, not by this API. Every entry has a test in tests/license.entitlement.gate.test.ts.
+ */
+export const ENTITLEMENT_EXEMPT: readonly AllowEntry[] = [
+  { method: "*", pattern: /^\/health$/, why: "liveness probe" },
+  { method: "*", pattern: /^\/operations\/(health|ready)$/, why: "health and readiness probes (uptime monitor)" },
+  { method: "*", pattern: /^\/license\/(status|install)$/, why: "the licence status and the way a licence is installed" },
+  { method: "*", pattern: /^\/auth(\/|$)/, why: "sign-in: login, refresh, logout, me, tenant and role selection, 2FA, the OIDC callback and authorize start, back-channel logout" },
+  {
+    method: "POST",
+    pattern: /^\/internal\/roles\/tenants\/[^/]+\/role-mappings\/resolve$/,
+    why: "SSO's role lookup on every token issuance (a query that writes nothing): refusing it would hand a user wrong roles at sign-in",
+  },
+];
+
+export function isEntitlementExempt(method: string, relPath: string): boolean {
+  const m = method.toUpperCase();
+  return ENTITLEMENT_EXEMPT.some((e) => (e.method === "*" || e.method === m) && e.pattern.test(relPath));
 }
 
 // ── route group -> module ─────────────────────────────────────────────────────────────────────────────────
@@ -116,11 +147,24 @@ function warnWouldBlock(key: string, detail: Record<string, unknown>): void {
 export function licenseGate(req: Request, _res: Response, next: NextFunction): void {
   try {
     const snapshot = getLicenseSnapshot();
-    // unconfigured / unknown / off: nothing is ever refused (principles 1 and 2).
-    if (snapshot.mode === "off" || snapshot.state === "unconfigured" || snapshot.state === "unknown") return next();
+    // off: nothing is ever refused (the emergency brake; startLicensePolling reports it at error level when required).
+    if (snapshot.mode === "off") return next();
 
     const rel = apiRelativePath(req);
     const warnOnly = snapshot.mode === "warn";
+
+    // Entitlement (contract section 9). Only ever false when LICENSE_REQUIRED is on.
+    if (!snapshot.licensed) {
+      if (isEntitlementExempt(req.method, rel)) return next();
+      if (warnOnly) {
+        warnWouldBlock("entitlement", { method: req.method, path: rel, reason: snapshot.reason });
+      } else {
+        return next(new AppError(403, LICENSE_ERROR.REQUIRED, LICENSE_REQUIRED_MESSAGE, { reason: snapshot.reason }));
+      }
+    }
+
+    // Not required: unconfigured / unknown never refuse (principles 1 and 2).
+    if (snapshot.state === "unconfigured" || snapshot.state === "unknown") return next();
 
     const moduleKey = moduleForPath(rel);
     if (moduleKey && !isModuleEnabled(moduleKey, snapshot)) {

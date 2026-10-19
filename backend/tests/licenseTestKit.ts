@@ -69,6 +69,8 @@ export function claims(over: Partial<LicenseClaims> = {}): LicenseClaims {
     warnDays: 30,
     maxUsers: null,
     modules: null,
+    modes: ["sso"],
+    jti: null,
     ...over,
   };
 }

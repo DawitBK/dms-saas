@@ -117,8 +117,22 @@ describe('sidebar mapping', () => {
   });
 });
 
+describe('licenseBanner: required and not licensed', () => {
+  it('is one fixed sentence, danger tone, for any state', () => {
+    for (const state of ['unconfigured', 'unknown', 'active', 'expiring', 'grace', 'expired'] as const) {
+      const model = banner(st({ state, required: true, licensed: false, reason: 'NO_LICENSE' }));
+      expect(model).toMatchObject({ tone: 'danger', message: 'This system is not licensed. Contact your administrator.' });
+    }
+  });
+  it('is not shown when licensed, not required, or the fields are absent (older backend: fail open)', () => {
+    expect(banner(st({ required: true, licensed: true }))).toBeNull();
+    expect(banner(st({ required: false, licensed: false }))).toBeNull();
+    expect(banner(st({}))).toBeNull();
+  });
+});
+
 describe('licence error wording', () => {
-  it('has plain wording for exactly the three codes', () => {
+  it('has plain wording for exactly the four codes', () => {
     for (const code of Object.values(LICENSE_ERROR)) {
       expect(isLicenseErrorCode(code)).toBe(true);
       expect(licenseWording(code)?.message.length).toBeGreaterThan(40);
@@ -132,6 +146,7 @@ describe('licence error wording', () => {
     expect(getErrorMessage(err)).toBe(licenseWording(LICENSE_ERROR.EXPIRED)!.message);
     expect(getErrorMessage(new ApiError('seat', { code: LICENSE_ERROR.SEAT_LIMIT, status: 403 }))).toMatch(/user limit/i);
     expect(getErrorMessage(new ApiError('mod', { code: LICENSE_ERROR.MODULE_DISABLED, status: 403 }))).toMatch(/not included/i);
+    expect(getErrorMessage(new ApiError('req', { code: LICENSE_ERROR.REQUIRED, status: 403 }))).toBe('This system is not licensed. Contact your administrator.');
   });
   it('leaves every other error alone', () => {
     expect(getErrorMessage(new ApiError('Department code already exists', { code: 'ERR-DEPT-CODE-EXISTS', status: 409 }))).toBe('Department code already exists');

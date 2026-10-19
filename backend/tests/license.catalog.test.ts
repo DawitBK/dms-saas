@@ -27,7 +27,7 @@ describe("licence constants match the contract", () => {
     expect(LICENSE_SYSTEM).toBe("dms");
     expect(LICENSE_TOKEN_TYP).toBe("kcms-license+jwt");
     expect(LICENSE_TOKEN_AUDIENCE).toBe("license:dms");
-    expect(LICENSE_ERROR).toEqual({ EXPIRED: "LICENSE_EXPIRED", MODULE_DISABLED: "LICENSE_MODULE_DISABLED", SEAT_LIMIT: "LICENSE_SEAT_LIMIT" });
+    expect(LICENSE_ERROR).toEqual({ EXPIRED: "LICENSE_EXPIRED", MODULE_DISABLED: "LICENSE_MODULE_DISABLED", SEAT_LIMIT: "LICENSE_SEAT_LIMIT", REQUIRED: "LICENSE_REQUIRED" });
   });
   it("the SSO route is the contract's GET .../licenses/public/dms under SSO's /api/v1", () => {
     expect(LICENSE_SSO_PUBLIC_PATH).toBe("/api/v1/licenses/public/dms");

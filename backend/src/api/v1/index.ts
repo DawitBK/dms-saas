@@ -33,7 +33,7 @@ import { bundleRoutes } from "../../modules/bundles/bundles.routes.js";
 import { approvalsRoutes } from "../../modules/approvals/approvals.routes.js";
 import { assignmentAdvisoryRoutes } from "../../modules/assignment-advisory/assignmentAdvisory.routes.js";
 import { featureFlagsRoutes } from "../../modules/feature-flags/featureFlags.routes.js";
-import { licenseRoutes } from "../../modules/license/license.routes.js";
+import { licensePublicRoutes, licenseRoutes } from "../../modules/license/license.routes.js";
 import { licenseGate } from "../../modules/license/licenseGate.js";
 import { authenticate, requirePermission } from "../../shared/auth.js";
 import { admissionControl, tenantContext } from "../../shared/middleware.js";
@@ -58,6 +58,10 @@ v1Routes.use(esigningPublicRoutes);
 // CAMS public QR verification â€” printed letters are verified by anyone who
 // scans the QR code, no account required (returns non-sensitive data only).
 v1Routes.use(lettersPublicRoutes);
+
+// Licence install: unauthenticated on purpose (an unlicensed system may have no usable login; the token signature is
+// the authority) and rate-limited inside the router. See modules/license/license.routes.ts.
+v1Routes.use(licensePublicRoutes);
 
 // User-based rate limiter â€” applied after authenticate so req.user is available.
 // Keys by userId for authenticated callers; falls back to IP for any unauthenticated

@@ -11,7 +11,7 @@
 
 export type LicenseState = 'unconfigured' | 'unknown' | 'active' | 'expiring' | 'grace' | 'expired';
 
-/** GET /license/status (contract section 5; `enforcement` is DMS's additive field). */
+/** GET /license/status (contract sections 5 and 9; `enforcement` is DMS's additive field). */
 export interface LicenseStatus {
   system: string;
   state: LicenseState;
@@ -30,7 +30,17 @@ export interface LicenseStatus {
   fetchedAt: string | null;
   version: number | null;
   enforcement?: 'enforce' | 'warn' | 'off';
+  /**
+   * Per-application entitlement (contract section 9). Optional on purpose: an older backend does not send them, and the UI
+   * then fails open (no banner). `required && !licensed` is the one case that shows the "not licensed" notice.
+   */
+  required?: boolean;
+  licensed?: boolean;
+  reason?: LicenseReason | null;
+  deployment?: 'sso' | 'standalone';
 }
+
+export type LicenseReason = 'NO_LICENSE' | 'MODE_NOT_LICENSED';
 
 export const LICENSE_QUERY_KEY = ['license', 'status'] as const;
 
@@ -56,7 +66,11 @@ export const LICENSE_ERROR = {
   EXPIRED: 'LICENSE_EXPIRED',
   MODULE_DISABLED: 'LICENSE_MODULE_DISABLED',
   SEAT_LIMIT: 'LICENSE_SEAT_LIMIT',
+  REQUIRED: 'LICENSE_REQUIRED',
 } as const;
+
+/** The notice shown to everyone when the system needs a licence and has none (contract section 9). */
+export const LICENSE_REQUIRED_NOTICE = 'This system is not licensed. Contact your administrator.';
 
 /** Is this module available? No status (yet) or no enforcement means yes. */
 export function isModuleEnabled(status: LicenseStatus | null | undefined, key: LicenseModuleKey): boolean {
@@ -69,6 +83,10 @@ export function isModuleEnabled(status: LicenseStatus | null | undefined, key: L
 // ── error wording ────────────────────────────────────────────────────────────────────────────────────────
 
 const WORDING: Record<string, { title: string; message: string }> = {
+  [LICENSE_ERROR.REQUIRED]: {
+    title: 'This system is not licensed',
+    message: LICENSE_REQUIRED_NOTICE,
+  },
   [LICENSE_ERROR.EXPIRED]: {
     title: 'Read-only: licence expired',
     message:
@@ -147,6 +165,8 @@ export interface LicenseBannerModel {
   tone: 'warning' | 'danger';
   title: string;
   body: string;
+  /** When set, shown as the whole text instead of "title. body" (the not-licensed notice is one fixed sentence). */
+  message?: string;
 }
 
 const DAY_MS = 86_400_000;
@@ -161,14 +181,18 @@ export function formatLicenseDate(iso: string | null | undefined, locale?: strin
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /**
- * What to tell the user, or null for nothing. `active`, `unknown` and `unconfigured` never show anything (owner decision
- * 2026-10-19: "no licence configured" is not a message anyone should see).
+ * What to tell the user, or null for nothing. A system that requires a licence and has none says so to everyone (contract
+ * section 9). Otherwise `active`, `unknown` and `unconfigured` never show anything (owner decision 2026-10-19: the old
+ * "no licence configured" wording is not a message anyone should see).
  */
 export function licenseBanner(
   status: LicenseStatus | null | undefined,
   opts: { now?: Date; locale?: string } = {},
 ): LicenseBannerModel | null {
   if (!status) return null;
+  if (status.required === true && status.licensed === false) {
+    return { tone: 'danger', title: 'This system is not licensed', body: 'Contact your administrator.', message: LICENSE_REQUIRED_NOTICE };
+  }
   const now = opts.now ?? new Date();
   const on = formatLicenseDate(status.expiresAt, opts.locale);
 

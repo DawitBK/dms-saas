@@ -204,8 +204,8 @@ instance.interceptors.response.use(
     }
     const message = body?.error?.message ?? body?.message ?? error.message ?? 'Request failed';
     const code = body?.error?.code ?? 'ERR-UNKNOWN';
-    // The licence went read-only while this page was open: refresh the banner now instead of at the next poll.
-    if (code === LICENSE_ERROR.EXPIRED) void queryClient.invalidateQueries({ queryKey: LICENSE_QUERY_KEY });
+    // The licence went read-only (or lapsed entirely) while this page was open: refresh the banner now instead of at the next poll.
+    if (code === LICENSE_ERROR.EXPIRED || code === LICENSE_ERROR.REQUIRED) void queryClient.invalidateQueries({ queryKey: LICENSE_QUERY_KEY });
     return Promise.reject(
       new ApiError(message, {
         code,

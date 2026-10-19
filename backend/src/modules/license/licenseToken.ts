@@ -6,6 +6,8 @@
  * expiry, and a consumer must never reject a token for its age), so a general-purpose verifier's checks are
  * either irrelevant or, for `typ`, absent. Uses node:crypto only, no new dependency.
  *
+ * Which key signs is the caller's business (resolveKey): SSO's JWKS, or the pinned LICENSE_TRUST_PUBLIC_KEYS.
+ *
  * Checked: three segments, alg RS256, typ, signature against the key for the header's `kid`, `iss`, `aud`
  * (`license:dms`), `sys` (`dms`), and the shape of every claim the rest of DMS relies on. Anything else is a
  * rejection (the caller then keeps the previous good token).
@@ -28,7 +30,14 @@ export interface LicenseClaims {
   maxUsers: number | null;
   /** null = every module enabled */
   modules: string[] | null;
+  /** Deployment modes this licence covers (contract section 9). Absent or empty in the token means ["sso"]. */
+  modes: LicenseMode[];
+  /** Unique id of this issued token (audit only). */
+  jti: string | null;
 }
+
+export type LicenseMode = "sso" | "standalone";
+const LICENSE_MODES: readonly string[] = ["sso", "standalone"];
 
 export type LicenseTokenResult = { ok: true; claims: LicenseClaims; kid: string } | { ok: false; reason: string };
 
@@ -77,6 +86,14 @@ export function parseLicenseClaims(p: Record<string, unknown>): { ok: true; clai
     modules = [...new Set(p.modules as string[])];
   }
 
+  let modes: LicenseMode[] = ["sso"];
+  if (p.modes !== null && p.modes !== undefined) {
+    if (!Array.isArray(p.modes) || !p.modes.every((m) => typeof m === "string" && LICENSE_MODES.includes(m))) {
+      return { ok: false, reason: "modes is not an array of sso | standalone" };
+    }
+    if (p.modes.length > 0) modes = [...new Set(p.modes as LicenseMode[])];
+  }
+
   return {
     ok: true,
     claims: {
@@ -91,6 +108,8 @@ export function parseLicenseClaims(p: Record<string, unknown>): { ok: true; clai
       warnDays: p.warnDays,
       maxUsers,
       modules,
+      modes,
+      jti: typeof p.jti === "string" ? p.jti : null,
     },
   };
 }

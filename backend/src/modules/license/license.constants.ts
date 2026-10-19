@@ -31,7 +31,14 @@ export const LICENSE_ERROR = {
   EXPIRED: "LICENSE_EXPIRED",
   MODULE_DISABLED: "LICENSE_MODULE_DISABLED",
   SEAT_LIMIT: "LICENSE_SEAT_LIMIT",
+  /** Contract section 9: LICENSE_REQUIRED is on and no (entitling) licence is held. */
+  REQUIRED: "LICENSE_REQUIRED",
 } as const;
+
+export const LICENSE_REQUIRED_MESSAGE = "This system is not licensed. Contact your administrator.";
+
+/** Longest token POST /license/install accepts (a real one is about 1 KB; the body parser itself allows 50 MB). */
+export const LICENSE_INSTALL_MAX_TOKEN_LENGTH = 16_384;
 
 export const LICENSE_EXPIRED_MESSAGE =
   "The licence has expired; the system is read-only. Contact your administrator.";

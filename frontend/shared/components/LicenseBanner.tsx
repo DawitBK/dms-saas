@@ -2,9 +2,10 @@
 
 // shared/components/LicenseBanner.tsx
 //
-// The licence banner (docs/operations/PLATFORM-LICENSING.md section 6): a strip above every signed-in page for
-// `expiring`, `grace` and `expired`. Mounted once in app/layout.tsx. Renders nothing without a status, for
-// `active`/`unknown`/`unconfigured`, or on pages with no session.
+// The licence banner (docs/operations/PLATFORM-LICENSING.md sections 6 and 9): a strip above every signed-in page for
+// `expiring`, `grace` and `expired`, and, when the system requires a licence and has none, a red alert for everyone.
+// Mounted once in app/layout.tsx. Renders nothing without a status, for `active`/`unknown`/`unconfigured` when no
+// licence is required, or on pages with no session.
 import { AlertTriangle, Lock } from 'lucide-react';
 import { useLicenseStatus } from '../hooks/useLicense';
 import { licenseBanner, type LicenseBannerModel } from '../lib/license';
@@ -32,7 +33,11 @@ export function LicenseBanner() {
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       <p className="min-w-0 flex-1">
-        <span className="font-semibold">{model.title}.</span> {model.body}
+        {model.message ?? (
+          <>
+            <span className="font-semibold">{model.title}.</span> {model.body}
+          </>
+        )}
       </p>
     </div>
   );

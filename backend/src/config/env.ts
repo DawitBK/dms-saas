@@ -539,6 +539,19 @@ const envSchema = z.object({
   // <cwd>/.license/dms-<NODE_ENV>.json (git-ignored; one file per environment because dev and mirror
   // run out of the same checkout).
   LICENSE_CACHE_PATH: optionalString,
+  // Per-application ENTITLEMENT (contract section 9): whether this system may be used at all. Default true when
+  // NODE_ENV is production or mirror (the live server and the prod-parity mirror), false otherwise, so development
+  // and tests behave exactly as before. When true and no verified licence is held, every request except sign-in,
+  // health and the licence routes answers 403 LICENSE_REQUIRED. `false` in a production process is logged at
+  // error level at every start (startLicensePolling).
+  LICENSE_REQUIRED: z.preprocess(
+    (v) => (v === "" || v === undefined ? process.env.NODE_ENV === "production" || process.env.NODE_ENV === "mirror" : v),
+    boolFromString,
+  ),
+  // JSON array of PUBLIC RS256 JWKs allowed to sign a licence. When LICENSE_REQUIRED is true these are the ONLY keys
+  // that verify one (SSO's JWKS is not trusted for licences); when it is false they are used if set, otherwise the
+  // SSO JWKS as before. Kept as the raw string: parsed (and a bad value reported) in modules/license/license.service.ts.
+  LICENSE_TRUST_PUBLIC_KEYS: optionalString,
   ENABLE_QUEUE_WORKERS: boolFromString.default(true),
   ENABLE_OUTBOX_POLLING: boolFromString.default(true),
   OUTBOX_POLL_INTERVAL_MS: z.coerce.number().default(5000),

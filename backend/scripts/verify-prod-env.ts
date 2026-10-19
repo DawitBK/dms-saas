@@ -102,6 +102,8 @@ console.log("Licence (platform licensing; the licence itself lives in SSO)");
 line("LICENSE_ENFORCEMENT", shown(config.LICENSE_ENFORCEMENT));
 line("LICENSE_SSO_URL", shown(config.LICENSE_SSO_URL));
 line("LICENSE_POLL_SECONDS", String(config.LICENSE_POLL_SECONDS));
+line("LICENSE_REQUIRED", config.LICENSE_REQUIRED ? "true" : "false  <- this system runs WITHOUT needing a licence");
+line("LICENSE_TRUST_PUBLIC_KEYS", config.LICENSE_TRUST_PUBLIC_KEYS ? "set" : "(unset: no licence can verify while LICENSE_REQUIRED is true)");
 console.log("");
 
 console.log("Process roles and exposure");

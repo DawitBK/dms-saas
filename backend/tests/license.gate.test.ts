@@ -337,7 +337,7 @@ describe("GET /license/status", () => {
     expect(res.status).toBe(200);
     expect(res.headers["cache-control"]).toBe("no-store");
     expect(Object.keys(res.body).sort()).toEqual(
-      ["system", "state", "customer", "expiresAt", "graceEndsAt", "daysRemaining", "warnDays", "graceDays", "readOnly", "maxUsers", "seatsUsed", "modules", "source", "fetchedAt", "version", "enforcement"].sort(),
+      ["system", "state", "customer", "expiresAt", "graceEndsAt", "daysRemaining", "warnDays", "graceDays", "readOnly", "maxUsers", "seatsUsed", "modules", "source", "fetchedAt", "version", "enforcement", "required", "licensed", "reason", "deployment"].sort(),
     );
     expect(res.body).toMatchObject({ system: "dms", state: "expired", readOnly: true, maxUsers: 20, seatsUsed: 12, modules: [], version: 9 });
   });
