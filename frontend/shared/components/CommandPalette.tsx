@@ -13,6 +13,8 @@ import {
 import { usePermissions } from '../hooks/usePermissions';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { PERMISSIONS } from '../lib/permissions';
+import { useLicenseModules } from '../hooks/useLicense';
+import { isNavHrefLicensed } from '../lib/license';
 import { useResetOnChange } from '../hooks/useResetOnChange';
 
 interface CommandItem {
@@ -20,7 +22,8 @@ interface CommandItem {
   label: string;
   description?: string;
   icon: React.ElementType;
-  action: () => void;
+  /** Where it goes; also what the licence module filter looks at (isNavHrefLicensed). */
+  href: string;
   permission?: string;
   keywords?: string[];
 }
@@ -28,85 +31,88 @@ interface CommandItem {
 export function CommandPalette() {
   const router = useRouter();
   const { can } = usePermissions();
+  // Same licence filter as the sidebar: a link into a module the licence switches off is not offered.
+  const { isModuleOn } = useLicenseModules();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
   const ALL_ITEMS: CommandItem[] = [
     {
       id: 'dashboard', label: 'Dashboard', icon: Files,
-      action: () => router.push('/dashboard'),
+      href: '/dashboard',
       permission: PERMISSIONS.DOCUMENT_READ,
       keywords: ['home', 'overview'],
     },
     {
       id: 'upload', label: 'Upload Document', icon: UploadCloud,
       description: 'Upload a new document',
-      action: () => router.push('/dashboard/upload'),
+      href: '/dashboard/upload',
       permission: PERMISSIONS.DOCUMENT_UPLOAD,
       keywords: ['new', 'create', 'add'],
     },
     {
       id: 'browse', label: 'Browse Files', icon: FolderOpen,
-      action: () => router.push('/dashboard/browse'),
+      href: '/dashboard/browse',
       permission: PERMISSIONS.FOLDER_READ,
       keywords: ['explore', 'folders'],
     },
     {
       id: 'files', label: 'My Files', icon: Files,
-      action: () => router.push('/dashboard/files'),
+      href: '/dashboard/files',
       permission: PERMISSIONS.DOCUMENT_READ,
       keywords: ['my documents', 'owned'],
     },
     {
       id: 'search', label: 'Search Documents', icon: Search,
-      action: () => router.push('/dashboard/search'),
+      href: '/dashboard/search',
       permission: PERMISSIONS.SEARCH_READ,
       keywords: ['find', 'query', 'lookup'],
     },
     {
       id: 'notifications', label: 'Notifications', icon: Bell,
-      action: () => router.push('/dashboard/notifications'),
+      href: '/dashboard/notifications',
       permission: PERMISSIONS.NOTIFICATION_READ,
       keywords: ['alerts', 'messages'],
     },
     {
       id: 'approvals', label: 'Approval Queue', icon: ClipboardCheck,
       description: 'Review pending workflow tasks',
-      action: () => router.push('/approver'),
+      href: '/approver',
       permission: PERMISSIONS.WORKFLOW_APPROVE,
       keywords: ['approve', 'review', 'tasks'],
     },
     {
       id: 'records', label: 'Records Console', icon: Archive,
       description: 'Manage retention and legal holds',
-      action: () => router.push('/records-officer'),
+      href: '/records-officer',
       permission: PERMISSIONS.RETENTION_MANAGE,
       keywords: ['retention', 'archive', 'disposal'],
     },
     {
       id: 'audit', label: 'Audit Log', icon: ShieldCheck,
       description: 'View the immutable audit trail',
-      action: () => router.push('/auditor'),
+      href: '/auditor',
       permission: PERMISSIONS.AUDIT_READ,
       keywords: ['logs', 'history', 'events'],
     },
     {
       id: 'admin', label: 'Administration', icon: Settings2,
       description: 'System configuration and users',
-      action: () => router.push('/admin'),
+      href: '/admin',
       permission: PERMISSIONS.USER_MANAGE,
       keywords: ['users', 'config', 'system'],
     },
     {
       id: 'settings', label: 'Settings', icon: Settings2,
-      action: () => router.push('/settings'),
+      href: '/settings',
       keywords: ['preferences', 'theme'],
     },
   ];
 
-  // Filter by permission + search query
+  // Filter by permission + licence module + search query
   const visibleItems = ALL_ITEMS.filter((item) => {
     if (item.permission && !can(item.permission)) return false;
+    if (!isNavHrefLicensed(item.href, isModuleOn)) return false;
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (
@@ -119,8 +125,8 @@ export function CommandPalette() {
   const handleSelect = useCallback((item: CommandItem) => {
     setOpen(false);
     setQuery('');
-    item.action();
-  }, []);
+    router.push(item.href);
+  }, [router]);
 
   // Ctrl+K to open
   useKeyboardShortcuts([

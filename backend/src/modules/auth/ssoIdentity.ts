@@ -25,9 +25,9 @@ import { UniqueConstraintError, QueryTypes, fn, col, where as sqlWhere } from 's
 import { AppError } from '../../core/AppError.js';
 import { logger } from '../../core/logger.js';
 import { User, UserTenant, sequelize } from '../../infrastructure/database/index.js';
-import { runInTransaction } from '../../shared/transaction.js';
 import { PLATFORM_ADMIN_ROLE, getPlatformAdminUserIds } from '../../shared/platformAdmin.js';
 import { writeAuditLog } from '../audit/audit.service.js';
+import { noteSeatsChanged, withSeatGuard } from '../license/licenseSeats.js';
 import { AUDIT_EVENTS } from '../audit/auditEvents.js';
 
 export interface OidcIdentity {
@@ -152,12 +152,18 @@ export async function resolveOidcUser(identity: OidcIdentity, defaultTenantId: s
 
   if (user) return user;
 
-  // runInTransaction, not a bare sequelize.transaction(): DMS/CLAUDE.md makes
+  // Platform licence seat limit: a brand-new account takes a seat. Refused here (403 LICENSE_SEAT_LIMIT) only
+  // for a NEW identity; every branch above that returns an existing account never reaches this line, so the
+  // limit can never stop anyone who already has an account from signing in. The check and the INSERT run
+  // under one advisory lock held to commit (licenseSeats.withSeatGuard), so two simultaneous first logins at
+  // limit-1 cannot both take the last seat.
+
+  // withSeatGuard (a runInTransaction): DMS/CLAUDE.md makes
   // that the convention for request-path writes. Here it lands on the fallback
   // branch (this is a public route, so tenantContext has not opened an ambient
   // transaction) which is exactly the real transaction wanted.
   try {
-    const created = await runInTransaction(async () => {
+    const created = await withSeatGuard({ via: 'oidc-jit' }, async (tx) => {
       const row = await User.create({
         // Lower-cased like createUser does, so the case-insensitive lookups above
         // and users.service's lower(email) comparisons agree on one form.
@@ -167,14 +173,15 @@ export async function resolveOidcUser(identity: OidcIdentity, defaultTenantId: s
         passwordHash: randomUUID(), // unusable password: OIDC-provisioned users authenticate via the IdP
         isActive: true,
         externalSub,
-      } as any);
+      } as any, { transaction: tx });
       // Real membership, not just the login-time fallback: without a
       // user_tenants row the user is invisible to the users RLS policy inside
       // any tenant context and only reachable via the legacy default-tenant
       // fallback. assignedBy is null: no acting user on this public callback.
-      await UserTenant.create({ userId: row.id, tenantId: defaultTenantId, assignedBy: null });
+      await UserTenant.create({ userId: row.id, tenantId: defaultTenantId, assignedBy: null }, { transaction: tx });
       return row;
     });
+    noteSeatsChanged();
     await writeAuditLog({
       eventType: AUDIT_EVENTS.SSO_USER_PROVISIONED,
       tenantId: defaultTenantId,

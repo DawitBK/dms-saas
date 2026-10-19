@@ -98,6 +98,12 @@ line("OIDC_CLIENT_ID", shown(config.OIDC_CLIENT_ID));
 line("LOCAL_JWT_MOCK", config.LOCAL_JWT_MOCK ? "true  <- passwordless login is reachable" : "false");
 console.log("");
 
+console.log("Licence (platform licensing; the licence itself lives in SSO)");
+line("LICENSE_ENFORCEMENT", shown(config.LICENSE_ENFORCEMENT));
+line("LICENSE_SSO_URL", shown(config.LICENSE_SSO_URL));
+line("LICENSE_POLL_SECONDS", String(config.LICENSE_POLL_SECONDS));
+console.log("");
+
 console.log("Process roles and exposure");
 line("ENABLE_QUEUE_WORKERS", String(config.ENABLE_QUEUE_WORKERS));
 line("ENABLE_OUTBOX_POLLING", String(config.ENABLE_OUTBOX_POLLING));

@@ -8,6 +8,8 @@
 import axios, { type AxiosRequestConfig, type AxiosError } from 'axios';
 import { useAuthStore } from '../../state/auth.store';
 import { API_BASE_URL } from './apiConfig';
+import { LICENSE_ERROR, LICENSE_QUERY_KEY } from './license';
+import { queryClient } from './queryClient';
 
 const API_BASE = API_BASE_URL;
 
@@ -202,6 +204,8 @@ instance.interceptors.response.use(
     }
     const message = body?.error?.message ?? body?.message ?? error.message ?? 'Request failed';
     const code = body?.error?.code ?? 'ERR-UNKNOWN';
+    // The licence went read-only while this page was open: refresh the banner now instead of at the next poll.
+    if (code === LICENSE_ERROR.EXPIRED) void queryClient.invalidateQueries({ queryKey: LICENSE_QUERY_KEY });
     return Promise.reject(
       new ApiError(message, {
         code,

@@ -23,6 +23,7 @@ function makeLetter(overrides: Partial<LetterDetail> = {}): LetterDetail {
     priority: 'NORMAL',
     correspondent: null,
     correspondentOrganization: null,
+    correspondentLocation: null,
     correspondentEmail: null,
     receivedDate: null,
     dueDate: null,

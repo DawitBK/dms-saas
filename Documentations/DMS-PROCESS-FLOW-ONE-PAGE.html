@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Document System Process Flow</title>
+<style>
+  @page { size: A4 landscape; margin: 10mm; }
+  :root {
+    --bg:#f7f6f3; --card:#fff; --ink:#1d2025; --soft:#555a63; --line:#dcd9d1;
+    --c1:#35507a; --c1bg:#e9eef6;
+    --c2:#0e7c7b; --c2bg:#e5f3f2;
+    --c3:#b5622a; --c3bg:#faece0;
+    --c4:#6b3f86; --c4bg:#efe8f6;
+    --good:#1f6b37; --goodbg:#e4f2e7; --bad:#95202f; --badbg:#f8e5e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#15171b; --card:#1d2025; --ink:#ecebe6; --soft:#b3b2ab; --line:#363a41;
+      --c1:#86a8dc; --c1bg:#1d2836; --c2:#62cdc7; --c2bg:#16282a;
+      --c3:#e59f63; --c3bg:#2c2016; --c4:#c9a8ef; --c4bg:#241c33;
+      --good:#7ed6a0; --goodbg:#173423; --bad:#f0a0ac; --badbg:#3a1a1e;
+    }
+  }
+  @media print { :root { --bg:#fff; --card:#fff; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .page { max-width:1200px; margin:0 auto; padding:18px 20px 24px; }
+  h1 { font-size:1.4rem; margin:0; }
+  .sub { color:var(--soft); margin:2px 0 12px; font-size:.9rem; }
+
+  .lane { display:grid; grid-template-columns:130px 1fr; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:10px; margin-bottom:8px; overflow:hidden; break-inside:avoid; }
+  .name { padding:10px 12px; color:#fff; font-weight:700; display:flex; flex-direction:column; justify-content:center; }
+  .name small { font-weight:400; opacity:.92; font-size:.75rem; margin-top:3px; line-height:1.3; }
+  .l1 .name { background:var(--c1); } .l2 .name { background:var(--c2); }
+  .l3 .name { background:var(--c3); } .l4 .name { background:var(--c4); }
+  @media (prefers-color-scheme: dark) { .name { color:#111; } }
+  .body { padding:8px 10px 8px 0; }
+  .steps { display:flex; flex-wrap:wrap; gap:6px 18px; list-style:none; margin:0; padding:0; }
+  .steps li { position:relative; border:1px solid var(--line); border-radius:7px; padding:5px 9px;
+    font-size:.82rem; background:var(--bg); }
+  .steps li b { display:block; font-size:.85rem; }
+  .steps li + li::before { content:"→"; position:absolute; left:-14px; top:50%; transform:translateY(-50%); color:var(--soft); font-weight:700; }
+  .l1 li b { color:var(--c1); } .l2 li b { color:var(--c2); } .l3 li b { color:var(--c3); } .l4 li b { color:var(--c4); }
+  .steps li.end { background:var(--goodbg); border-color:var(--good); }
+  .steps li.stop { background:var(--badbg); border-color:var(--bad); }
+  .alt { margin:6px 0 0; font-size:.78rem; color:var(--soft); }
+  .alt b { color:var(--ink); }
+
+  .common { border:1px dashed var(--line); border-radius:10px; padding:8px 12px; margin-bottom:8px; font-size:.82rem; }
+  .common b { color:var(--ink); }
+  .rules { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; font-size:.78rem; }
+  .rules div { border:1px solid var(--line); border-radius:8px; padding:6px 9px; background:var(--card); }
+  .rules b { display:block; }
+  @media (max-width:800px) {
+    .lane { grid-template-columns:1fr; } .name { padding:8px 12px; }
+    .body { padding:0 10px 10px; } .rules { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Document System: How Work Flows</h1>
+  <p class="sub">Uploads, letters, e-signing and forms, start to finish. Green boxes are the finish. Red is a stop.</p>
+
+  <div class="common">
+    <b>Shared by all four: the approval step.</b>
+    Each reviewer in turn can <b>approve</b>, <b>ask for changes</b> (returns to the author, not dead) or <b>decline</b> (written reason required; the author can rework and resubmit on a fresh list). Every decision is recorded permanently.
+  </div>
+
+  <div class="lane l1">
+    <div class="name">1. Uploads<small>Any employee</small></div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Upload</b>Pick file and document type</li>
+        <li><b>Virus check</b>Large files wait; infected ones blocked</li>
+        <li><b>Draft</b>Author can still edit</li>
+        <li><b>Submit</b>Reviewer list pre-filled by the type</li>
+        <li><b>In review</b>Each reviewer decides</li>
+        <li><b>Approved</b>All steps passed</li>
+        <li><b>Signing / audit</b>Only if the type requires</li>
+        <li class="end"><b>Active</b>The official version</li>
+        <li><b>Archived</b>Retired, kept</li>
+        <li><b>Disposal due</b>Keep-for period ended</li>
+        <li class="stop"><b>Destroyed</b>Authorised by an officer</li>
+      </ol>
+      <p class="alt"><b>Side paths:</b> types marked "no approval needed" go straight from Draft to Active · deleted items wait 30 days in the Recycle Bin · replaced versions become Superseded · <b>legal hold</b> freezes a record and overrides any destruction · destroying outside the schedule needs a second person's approval.</p>
+    </div>
+  </div>
+
+  <div class="lane l2">
+    <div class="name">2. Letters<small>Employee drafts, manager or officer finishes</small></div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Draft</b>Write in system or scan in</li>
+        <li><b>Submit</b>To a checker</li>
+        <li><b>Checked</b>May be returned for edits</li>
+        <li><b>Final approval</b>Reference number, fingerprint and QR code created</li>
+        <li><b>Signing</b>If the letter type needs it</li>
+        <li><b>Sent</b>Method and date recorded</li>
+        <li class="end"><b>Filed</b>PDF stored in the Archive</li>
+      </ol>
+      <p class="alt"><b>Incoming mail:</b> a records officer registers it, gets a reference number straight away, routes it to a department and sets a reply due date. Then: received → responded → closed → archived. Overdue items are flagged. <b>Anyone can scan the QR code, with no login, to check a letter is genuine.</b></p>
+    </div>
+  </div>
+
+  <div class="lane l3">
+    <div class="name">3. E-signing<small>Sender sets up, signers sign</small></div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>New request</b>Choose a PDF</li>
+        <li><b>Add signers</b>Colleague, a role, or an outsider by email</li>
+        <li><b>Place spots</b>Signature, initials, date, text, seal</li>
+        <li><b>Send</b>One by one or all at once</li>
+        <li><b>Sign</b>Signer opens task or private link and signs</li>
+        <li><b>Partly signed</b>Waiting on the rest</li>
+        <li class="end"><b>Completed</b>Signed copy saved as a new version</li>
+      </ol>
+      <p class="alt"><b>Side paths:</b> a signer declines → document marked "signing declined"; sender cancels and resends · sender can cancel at any time · a request expires if nobody finishes in time.</p>
+    </div>
+  </div>
+
+  <div class="lane l4">
+    <div class="name">4. Forms<small>Builder designs, anyone fills</small></div>
+    <div class="body">
+      <ol class="steps">
+        <li><b>Design</b>Fields, layout, letterhead</li>
+        <li><b>Template approved</b>Goes through the approval step before going live</li>
+        <li><b>Active</b>Available to fill</li>
+        <li><b>Fill in</b>Employee completes and submits</li>
+        <li><b>Approval</b>Only if the template asks for it</li>
+        <li><b>Reference number</b>Created on final approval</li>
+        <li class="end"><b>Filed</b>Stored in the Archive</li>
+      </ol>
+      <p class="alt"><b>Side paths:</b> forms set to "no approval" are filed the moment they're submitted · a live template can be replaced by a new version or retired · employees track their forms under My Submissions.</p>
+    </div>
+  </div>
+
+  <div class="rules">
+    <div><b>No shortcuts</b>Nobody can jump an item to "approved" by hand.</div>
+    <div><b>Independent audit</b>If required, the final approver picks an auditor, who can't be the writer or approver.</div>
+    <div><b>Stuck approval?</b>A records officer or administrator reassigns or cancels it.</div>
+    <div><b>All in one place</b>Every finished item ends up in the Archive.</div>
+  </div>
+</div>
+</body>
+</html>

@@ -26,7 +26,22 @@ import { execFileSync } from 'node:child_process';
 // removal condition — "the frontend moves to next@16, which ships a patched
 // postcss" — was met on 2026-09-06, so it was removed rather than left to rot
 // into an exception nobody rechecks.
-const ACCEPTED = {};
+//
+// 2026-10-17: node-forge (and @signpdf/signer-p12, which only depends on it) carries GHSA-86w9-cpqp-85rv, "RSA PKCS#1 v1.5
+// signature verification accepts extra nested DigestAlgorithm elements". The advisory range is "*" and node-forge 1.4.0 is the
+// latest release, so there is no version to move to. DMS uses node-forge to create its own CA and certificates, to sign, and to
+// verify (signing.service.ts, publicKey.verify and caCert.verify) signatures it created itself; it does not accept signatures from
+// outside. That limits the exposure but does not remove it, so this is a tracked exception, not a dismissal.
+const ACCEPTED = {
+  'node-forge': {
+    reason: 'GHSA-86w9-cpqp-85rv has no patched release; DMS verifies only signatures it produced with its own CA',
+    removeWhen: 'node-forge publishes a fixed release (check each month), or signature verification moves to Node crypto; re-review by 2026-12-31',
+  },
+  '@signpdf/signer-p12': {
+    reason: 'flagged only through node-forge (same advisory)',
+    removeWhen: 'node-forge is fixed',
+  },
+};
 
 let report;
 try {

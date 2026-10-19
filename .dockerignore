@@ -8,6 +8,10 @@
 **/*.log
 **/.env
 **/.env.local
-**/storage
+# Runtime document storage only (backend/storage). A bare **/storage also matched
+# source directories (backend/src/infrastructure/storage, frontend/app/dashboard/storage),
+# which broke the image build.
+backend/storage
+backups
 backend/test-results.json
 backend/coverage

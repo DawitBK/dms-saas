@@ -1,6 +1,6 @@
 // SPRINT-2: user and role assignment logic will be reworked once permissions replace role checks.
 import { z } from "zod";
-import { Op, UniqueConstraintError } from "sequelize";
+import { Op, UniqueConstraintError, type Transaction } from "sequelize";
 import sharp from "sharp";
 import { AppError } from "../../core/AppError.js";
 import {
@@ -20,6 +20,7 @@ import { runInSavepoint, runInTransaction } from "../../shared/transaction.js";
 import { getMaxRolePermissionsAcrossTenants } from "../roles/roles.service.js";
 import { assertNotHiddenUser, excludeHiddenWhere, hiddenUserIds, isPlatformAdminRoleName } from "../../shared/platformAdmin.js";
 import { assertDepartmentsInScope, hasTenantWideStructureAuthority } from "../../shared/orgScope.js";
+import { noteSeatsChanged, withSeatGuard } from "../license/licenseSeats.js";
 
 const createUserSchema = z.object({
   email: z.string().email().max(255),
@@ -374,6 +375,18 @@ export async function createUser(
     throw new AppError(409, "ERR-USER-EMAIL-EXISTS", `A user with email "${email}" already exists`);
   }
 
+  // Platform licence seat limit (modules/license/licenseSeats.ts): only an ACTIVE new account takes a seat. The
+  // check and the INSERT run under one advisory lock held to commit, so two simultaneous creations at
+  // limit-1 cannot both pass; an inactive account takes no seat and no lock.
+  const insertUser = () => User.create({
+    email,
+    passwordHash: null,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    isActive: data.isActive ?? true,
+    mustChangePassword: false
+  }, { returning: false });
+
   // returning:false — under RLS, INSERT..RETURNING requires the new row to be
   // visible via the SELECT policy, but users are visible only through their
   // user_tenants link, which can't exist before the row does (id/values are
@@ -383,14 +396,9 @@ export async function createUser(
   // every field here including the UUID id is client-generated.)
   let user: User;
   try {
-    user = (await User.create({
-      email,
-      passwordHash: null,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      isActive: data.isActive ?? true,
-      mustChangePassword: false
-    }, { returning: false })) as unknown as User;
+    user = (await ((data.isActive ?? true)
+      ? withSeatGuard({ via: "users.create" }, insertUser)
+      : insertUser())) as unknown as User;
   } catch (err) {
     if (err instanceof UniqueConstraintError) {
       throw new AppError(409, "ERR-USER-EMAIL-EXISTS", `A user with email "${email}" already exists`);
@@ -426,6 +434,7 @@ export async function createUser(
     });
   }
   
+  noteSeatsChanged();
   await writeAuditLog({ 
     eventType: AUDIT_EVENTS.USER_CREATED, 
     userId: requesterId,
@@ -440,6 +449,8 @@ export async function updateUser(id: string, input: unknown, requesterId: string
   const data = updateUserSchema.parse(input);
   const user = await User.findByPk(id);
   if (!user) throw new AppError(404, "ERR-USER-NOT-FOUND", "User not found");
+  // Re-activating an inactive account takes a seat (licence seat limit); editing an active one never does.
+  const takesSeat = data.isActive === true && !user.isActive;
 
   // The update schema is createUserSchema.partial(), so it *accepts* roleIds /
   // departmentIds — but user.update() silently drops them (they are not columns),
@@ -462,12 +473,18 @@ export async function updateUser(id: string, input: unknown, requesterId: string
   // independent isActive check, so a deactivated user's token kept working
   // until natural expiry while the admin who deactivated them saw a
   // misleading 500 for a change that, in fact, already took effect.
-  await runInTransaction(async (tx) => {
+  const applyUpdate = async (tx: Transaction) => {
     await user.update(data, { transaction: tx });
     if (data.isActive === false) {
       await revokeAllUserSessions(id, { transaction: tx, reason: "user-deactivated" });
     }
-  });
+  };
+  if (takesSeat) {
+    await withSeatGuard({ userId: user.id, via: "users.update" }, applyUpdate); // seat check + write under one lock
+    noteSeatsChanged();
+  } else {
+    await runInTransaction(applyUpdate);
+  }
 
   // Run the offboarding sweep (M8) only after the deactivation is durably
   // committed — it has its own savepoint-based failure isolation already.
@@ -720,8 +737,12 @@ export async function activateUser(id: string, requesterId: string) {
   await assertNotHiddenUser(id, requesterId);
   const user = await User.findByPk(id);
   if (!user) throw new AppError(404, 'ERR-USER-NOT-FOUND', 'User not found');
-  
-  await user.update({ isActive: true, lockedUntil: null });
+  // Re-activating an inactive account takes a seat (licence seat limit); an already-active one is a no-op.
+  const doActivate = (tx: Transaction) => user.update({ isActive: true, lockedUntil: null }, { transaction: tx });
+  // The seat check and the write run under one advisory lock held to commit (licenseSeats.withSeatGuard).
+  if (!user.isActive) await withSeatGuard({ userId: user.id, via: 'users.activate' }, doActivate);
+  else await user.update({ isActive: true, lockedUntil: null });
+  noteSeatsChanged();
   
   await writeAuditLog({ 
     eventType: AUDIT_EVENTS.USER_ACTIVATED, 

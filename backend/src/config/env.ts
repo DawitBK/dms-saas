@@ -522,6 +522,23 @@ const envSchema = z.object({
   // the behaviour before 2026-10-10). Breach flagging and escalation of letter steps reuse the
   // APPROVAL_ESCALATION_* switches above, so one policy governs both engines.
   LETTER_STEP_DEFAULT_SLA_HOURS: z.coerce.number().int().min(0).max(24 * 90).default(0),
+  // Platform licensing (docs/operations/PLATFORM-LICENSING.md at the repo root; DMS is system key `dms`).
+  // The licence is issued in SSO and checked here from a signed token. None of these is required: with no
+  // licence record in SSO, or with SSO unreachable and no token ever fetched, nothing is enforced.
+  //   enforce - read-only on expiry, module gate, seat limit (default)
+  //   warn    - states are computed and shown (banner, /license/status) but nothing is ever blocked
+  //   off     - no fetcher, no enforcement; /license/status answers `unknown`
+  // Emergency switch: LICENSE_ENFORCEMENT=warn and restart the API.
+  LICENSE_ENFORCEMENT: z.preprocess(emptyToUndefined, z.enum(["enforce", "warn", "off"]).default("enforce")),
+  // Base URL of the SSO BACKEND (no path). The token route is a single constant in
+  // modules/license/license.constants.ts. The mirror's env sets http://127.0.0.1:9300.
+  LICENSE_SSO_URL: z.preprocess(emptyToUndefined, z.string().url().default("http://127.0.0.1:7300")),
+  // Seconds between licence polls (first poll at boot). Floor 10 so a typo cannot hammer SSO.
+  LICENSE_POLL_SECONDS: z.coerce.number().int().min(10).max(86_400).default(300),
+  // Where the last verified token is kept so a restart while SSO is down still enforces it. Unset =
+  // <cwd>/.license/dms-<NODE_ENV>.json (git-ignored; one file per environment because dev and mirror
+  // run out of the same checkout).
+  LICENSE_CACHE_PATH: optionalString,
   ENABLE_QUEUE_WORKERS: boolFromString.default(true),
   ENABLE_OUTBOX_POLLING: boolFromString.default(true),
   OUTBOX_POLL_INTERVAL_MS: z.coerce.number().default(5000),

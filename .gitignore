@@ -41,6 +41,9 @@ frontend/*.log
 backend/storage/
 backend/storage-mirror/
 
+# Platform licensing: the last verified licence token (per environment), written at runtime
+backend/.license/
+
 # Claude Code local tooling config
 .claude/
 

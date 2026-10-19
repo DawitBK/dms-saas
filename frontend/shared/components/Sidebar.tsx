@@ -47,6 +47,8 @@ import { useAuthStore } from '../../state/auth.store';
 import { fallbackPollInterval, useRealtimeStore } from '../../state/realtime.store';
 import { useUIStore } from '../../state/ui.store';
 import { usePermissions } from '../hooks/usePermissions';
+import { useLicenseModules } from '../hooks/useLicense';
+import { isNavHrefLicensed } from '../lib/license';
 import { PERMISSIONS } from '../lib/permissions';
 import { Avatar } from './Avatar';
 import { ThemeSwitcher } from './ThemeSwitcher';
@@ -498,6 +500,9 @@ export function Sidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { can } = usePermissions();
+  // Licence module gate: entries whose module is not licensed are hidden (the API refuses them anyway, 403
+  // LICENSE_MODULE_DISABLED). No status yet, or an unlicensed-nothing install, shows everything.
+  const { isModuleOn } = useLicenseModules();
   const {
     userId,
     email,
@@ -619,7 +624,7 @@ export function Sidebar() {
   const { data: myWorkData } = useQuery({
     queryKey: ['my-work-count'],
     queryFn: () => apiClient<{ approvals?: unknown[]; signatures?: unknown[]; audits?: unknown[]; letters?: unknown[] }>('/approvals/my/work'),
-    enabled: !!accessToken && !!userId,
+    enabled: !!accessToken && !!userId && isModuleOn('workflow'), // /approvals is the workflow module
     staleTime: 30_000,
     refetchInterval: fallbackPollInterval(socketConnected),
   });
@@ -644,25 +649,27 @@ export function Sidebar() {
 
   // Memoize so nav items don't recompute on every render
   const filteredGroups = useMemo(
-    () =>
-      navGroups
+    () => {
+      const moduleOn = (href: string) => isNavHrefLicensed(href, isModuleOn);
+      return navGroups
         .map((g) => ({
           ...g,
           items: g.items
             .map((entry): NavEntry | null => {
               if (isParent(entry)) {
                 const children = entry.children.filter((child) =>
-                  can(child.permission),
+                  can(child.permission) && moduleOn(child.href),
                 );
                 return children.length > 0 ? { ...entry, children } : null;
               }
-              return can(entry.permission) ? entry : null;
+              return can(entry.permission) && moduleOn(entry.href) ? entry : null;
             })
             .filter((entry): entry is NavEntry => entry !== null),
         }))
-        .filter((g) => g.items.length > 0),
+        .filter((g) => g.items.length > 0);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, can],
+    [userId, can, isModuleOn],
   );
 
   if (!hydrated || isAuthPage) return null;

@@ -33,6 +33,8 @@ import { bundleRoutes } from "../../modules/bundles/bundles.routes.js";
 import { approvalsRoutes } from "../../modules/approvals/approvals.routes.js";
 import { assignmentAdvisoryRoutes } from "../../modules/assignment-advisory/assignmentAdvisory.routes.js";
 import { featureFlagsRoutes } from "../../modules/feature-flags/featureFlags.routes.js";
+import { licenseRoutes } from "../../modules/license/license.routes.js";
+import { licenseGate } from "../../modules/license/licenseGate.js";
 import { authenticate, requirePermission } from "../../shared/auth.js";
 import { admissionControl, tenantContext } from "../../shared/middleware.js";
 import { PERMISSIONS } from "../../config/permissions.js";
@@ -40,6 +42,11 @@ import { config } from "../../config/env.js";
 import { createRedisRateLimitStore } from "../../infrastructure/cache/rateLimitStore.js";
 
 export const v1Routes = Router();
+
+// Platform licensing (docs/operations/PLATFORM-LICENSING.md): the module gate and, once a verified licence has
+// expired, the read-only guard. FIRST on purpose, so it also covers the public e-signing routes below and the
+// /operations and /internal routers; it fails open on any fault and never reads req.user. See modules/license/.
+v1Routes.use(licenseGate);
 
 v1Routes.use("/auth", authRoutes);
 
@@ -118,6 +125,9 @@ protectedRoutes.use("/org-units", orgUnitsRoutes);
 protectedRoutes.use("/bundles", bundleRoutes);
 protectedRoutes.use("/approvals", approvalsRoutes);
 protectedRoutes.use("/assignment-advisory", assignmentAdvisoryRoutes);
+
+// Licence status: any authenticated user, authenticate only (no tenantContext; the answer is installation-wide).
+v1Routes.use("/license", authenticate, licenseRoutes);
 
 v1Routes.use("/operations", operationsRoutes);
 // Internal admin API for the IdP's admin console — has its own shared-secret

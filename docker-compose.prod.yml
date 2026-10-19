@@ -96,6 +96,10 @@ x-backend-env: &backend-env
   # API (shared/internalAuth.ts) — was missing from this env block entirely, so
   # setting it in .env.prod alone did nothing for the containerized deploy.
   DMS_INTERNAL_API_KEY: ${DMS_INTERNAL_API_KEY:?set in .env.prod}
+  # Platform licensing (docs/operations/PLATFORM-LICENSING.md): optional; empty LICENSE_SSO_URL = the default.
+  LICENSE_ENFORCEMENT: ${LICENSE_ENFORCEMENT:-enforce}
+  LICENSE_SSO_URL: ${LICENSE_SSO_URL:-}
+  LICENSE_POLL_SECONDS: ${LICENSE_POLL_SECONDS:-300}
 
 services:
   migrate:

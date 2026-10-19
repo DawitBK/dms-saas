@@ -162,10 +162,11 @@ describe('resolveOidcUser: which DMS account is this identity?', () => {
       expect(out).toBe(created);
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({ email: 'alice@examplecorp.com', externalSub: 'sub-1', isActive: true, firstName: 'Alice', lastName: 'A' }),
+        expect.objectContaining({ transaction: expect.anything() }), // the seat guard's transaction (licenseSeats.withSeatGuard)
       );
       const arg = mockCreate.mock.calls[0][0];
       expect(typeof arg.passwordHash).toBe('string');
-      expect(mockTenantCreate).toHaveBeenCalledWith({ userId: 'new', tenantId: TENANT, assignedBy: null });
+      expect(mockTenantCreate).toHaveBeenCalledWith({ userId: 'new', tenantId: TENANT, assignedBy: null }, expect.objectContaining({ transaction: expect.anything() }));
       expect(mockAudit).toHaveBeenCalledWith(expect.objectContaining({ eventType: 'SSO_USER_PROVISIONED', userId: 'new' }));
     });
 

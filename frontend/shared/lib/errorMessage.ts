@@ -8,6 +8,7 @@
 // `code`/`details`/`isNetworkError`, because apiClient.ts used to discard all
 // three before any of this code ran.
 import { ApiError } from './apiClient';
+import { licenseWording } from './license';
 
 /** Turn any caught value into a message worth showing a user. Never returns
  *  a bare "Request failed"-style non-answer when the backend sent a real
@@ -15,6 +16,9 @@ import { ApiError } from './apiClient';
  *  Error at all (a thrown string/object, which nothing in this app throws
  *  deliberately). */
 export function getErrorMessage(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
+  // The three licence refusals (read-only, module not licensed, user limit) get one plain wording everywhere.
+  const licence = err instanceof ApiError ? licenseWording(err.code) : undefined;
+  if (licence) return licence.message;
   if (err instanceof Error && err.message) return err.message;
   return fallback;
 }

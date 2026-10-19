@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/package.json
 COPY frontend/package.json ./frontend/package.json
+# frontend/package.json depends on "xlsx": "file:../vendor/xlsx-0.20.3.tgz"; npm ci cannot resolve it without the tarball
+COPY vendor ./vendor
 RUN npm ci
 
 # ---- build: compile backend TypeScript (tsc, per backend/tsconfig.json) ----
@@ -52,7 +54,10 @@ WORKDIR /repo
 # .so's only). Missing this makes `require('canvas')` throw
 # "libcairo.so.2: cannot open shared object file" at OCR-job time — a
 # container-only failure mode that would never show up in local dev.
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# `apt-get upgrade` first: the base image is rebuilt only now and then, so
+# Debian security fixes published since (the Trivy gate in CI flags a fixed
+# CRITICAL in perl-base) would otherwise ship until the next base rebuild.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get install -y --no-install-recommends \
     libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libjpeg62-turbo libgif7 librsvg2-2 libpixman-1-0 \
     && rm -rf /var/lib/apt/lists/*
 

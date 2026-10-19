@@ -47,5 +47,6 @@ The audit files stay at the DMS root because code comments and migrations cite t
 | [UI-BACKEND-PARITY-SWEEP-2026-09-18.md](UI-BACKEND-PARITY-SWEEP-2026-09-18.md) | A point-in-time sweep |
 | `history/` | The June 2026 Phase 1 Word specs (BRD, FRD, implementation plan, TDD, engineering governance), replaced by the documents above |
 | `user-guides/` | The two HTML user guides |
+| [DMS-PROCESS-FLOW-ONE-PAGE.html](DMS-PROCESS-FLOW-ONE-PAGE.html) | The document process flow on one printable A4 landscape page (moved here from the platform root, 2026-10-17) |
 
 [← DMS README](../README.md) · [Platform start page](../../README.md)

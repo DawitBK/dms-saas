@@ -16,7 +16,8 @@
 // error reads as "something broke" rather than "nothing here yet" while
 // still looking like the same design system, not a bolted-on alert box.
 import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
-import { getErrorMessage, getErrorReference, isNetworkError } from '../lib/errorMessage';
+import { getErrorCode, getErrorMessage, getErrorReference, isNetworkError } from '../lib/errorMessage';
+import { licenseWording } from '../lib/license';
 
 interface ErrorStateProps {
   /** Whatever a catch block or a TanStack Query `error` field handed you —
@@ -43,7 +44,7 @@ export function ErrorState({ error, title, message, onRetry, className = '' }: E
       <div className="ui-error-icon-wrap">
         <Icon className="ui-error-icon" />
       </div>
-      <p className="ui-error-title">{title ?? (offline ? 'Connection problem' : 'Something went wrong')}</p>
+      <p className="ui-error-title">{title ?? licenseWording(getErrorCode(error))?.title ?? (offline ? 'Connection problem' : 'Something went wrong')}</p>
       <p className="ui-error-desc">{resolvedMessage}</p>
       {reference && <p className="ui-error-ref">Reference: {reference}</p>}
       {onRetry && (

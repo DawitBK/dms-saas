@@ -7,43 +7,10 @@ on:
 jobs:
   typecheck-test-build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm install
-      - run: npm run typecheck
-      - run: npm --workspace backend run lint
-      - run: npm --workspace frontend run lint
-      - run: npm run containers:check-pins
-      # Fails on any NEW high/critical advisory in the production tree. One
-      # advisory is accepted with a written reason and a removal condition —
-      # see tools/audit-gate.mjs. A bare `npm audit --audit-level=high` is red
-      # on every run because of it, and a permanently red gate gets ignored.
-      - run: npm run audit:gate
-      # Coverage is a tracked release signal, not a decorative local-only
-      # report. Keep test-results.json too: test:status consumes it below.
-      - run: npm --workspace backend run test:coverage
-      - run: npm run test:status
-      - run: git diff --exit-code -- Documentations/TEST_STATUS.md
-      # The frontend refuses production builds without an explicit API URL
-      # (no silent localhost fallback) — CI proves buildability with a
-      # placeholder; real deploys pass their own values via --build-arg.
-      - run: npm run build
-        env:
-          NEXT_PUBLIC_API_BASE_URL: https://ci-placeholder.invalid/api/v1
-          NEXT_PUBLIC_SOCKET_URL: https://ci-placeholder.invalid
-      - name: Upload backend coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: backend/coverage
-          if-no-files-found: error
-
-  db-backed-integration:
-    runs-on: ubuntu-latest
+    # Several unit suites open a real Sequelize connection and a Redis client
+    # (transactions, the department cache, socket rooms) even though the rest of
+    # their world is mocked; they need a migrated database to be there. The same
+    # throwaway services the integration job uses.
     services:
       postgres:
         image: postgres:16
@@ -68,6 +35,105 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      TZ: UTC
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: edams
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: ci-jwt-secret-with-at-least-32-chars
+      JWT_REFRESH_SECRET: ci-refresh-secret-with-at-least-32
+      AUDIT_HMAC_SECRET: ci-audit-secret-with-at-least-32-chars
+      # tests/prodGuards.test.ts builds its production baseline on top of the
+      # ambient config and expects the JWKS address to be present already.
+      AUTH_JWKS_URI: https://idp.example.com/.well-known/jwks.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm --workspace backend run lint
+      - run: npm --workspace frontend run lint
+      - run: npm run containers:check-pins
+      # Fails on any NEW high/critical advisory in the production tree. One
+      # advisory is accepted with a written reason and a removal condition —
+      # see tools/audit-gate.mjs. A bare `npm audit --audit-level=high` is red
+      # on every run because of it, and a permanently red gate gets ignored.
+      - run: npm run audit:gate
+      # Coverage is a tracked release signal, not a decorative local-only
+      # report. Keep test-results.json too: test:status consumes it below.
+      - name: Migrate the unit-test database
+        run: npm --workspace backend run db:migrate
+        env:
+          NODE_ENV: test
+      # Same command as `npm run test:coverage` in backend/, with the CI jest
+      # config (ts-jest in transpile-only mode, reason in the file; `npm run
+      # typecheck` above already type-checks the tests).
+      - name: Unit tests with coverage
+        run: >-
+          npm --workspace backend exec --
+          jest --config ../.github/ci/jest.config.ci.cjs --passWithNoTests
+          --json --outputFile=test-results.json
+          --coverage --coverageReporters=text-summary
+          --coverageReporters=json-summary --coverageReporters=lcov
+      - run: npm run test:status
+      - run: git diff --exit-code -- Documentations/TEST_STATUS.md
+      # The frontend refuses production builds without an explicit API URL
+      # (no silent localhost fallback) — CI proves buildability with a
+      # placeholder; real deploys pass their own values via --build-arg.
+      # `npm run build` ends with a postbuild step that stamps the hash of
+      # frontend/.env.production into .next; that file is gitignored, so write
+      # the placeholder values into it here.
+      - name: Write the frontend build env file
+        run: |
+          {
+            echo "NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL"
+            echo "NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL"
+          } > frontend/.env.production
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://ci-placeholder.invalid/api/v1
+          NEXT_PUBLIC_SOCKET_URL: https://ci-placeholder.invalid
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://ci-placeholder.invalid/api/v1
+          NEXT_PUBLIC_SOCKET_URL: https://ci-placeholder.invalid
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: error
+
+  db-backed-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: DMS
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d DMS"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
       NODE_ENV: test
       TZ: UTC
       PORT: 7100
@@ -76,7 +142,7 @@ jobs:
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
-      DB_NAME: edams
+      DB_NAME: DMS
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-jwt-secret-with-at-least-32-chars
       JWT_REFRESH_SECRET: ci-refresh-secret-with-at-least-32
@@ -90,15 +156,34 @@ jobs:
       CLIENT_URL: http://localhost:7101
       CAMS_VERIFY_BASE_URL: http://localhost:7101/verify
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
       - run: npm install
+      # DMS signs its own session tokens with an RSA pair kept in the environment
+      # (DEV_RSA_*). A fresh pair for this job only, never stored anywhere.
+      - name: Generate throwaway session signing keys
+        run: node backend/scripts/generate-rsa-keys.js | grep '^DEV_RSA_' >> "$GITHUB_ENV"
       - run: npm --workspace backend run db:migrate:check
       - run: npm --workspace backend run db:migrate
       - run: npm --workspace backend run db:seed:core
+      # The ACL and tenant verifiers below work in the QA tenant `qa-lab`. The
+      # seeder only runs with NODE_ENV=development against a database named DMS
+      # (it refuses anything else, on purpose), hence the DB name above.
+      - name: Create the throwaway platform administrator
+        run: psql -v ON_ERROR_STOP=1 -f .github/ci/seed-ci-platform-admin.sql
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: DMS
+      - name: Seed the QA tenant
+        run: npm --workspace backend run db:seed:qa
+        env:
+          NODE_ENV: development
       - run: npm --workspace backend exec tsx test-scripts/test-acl-ancestry.ts
       - name: Start backend
         run: |
@@ -138,6 +223,10 @@ jobs:
       REDIS_URL: redis://127.0.0.1:6379
       JWT_SECRET: ci-jwt-secret-with-at-least-32-chars
       JWT_REFRESH_SECRET: ci-refresh-secret-with-at-least-32
+      # The Playwright run signs in ONCE and reuses that session for every spec. The default access token lives 15 minutes and the
+      # run takes 14 to 20 (qa-world alone 11 to 13), so the last specs (smoke) started with an expired token: eight 401s and pages that
+      # bounced to login. 60 minutes is longer than the job's own timeout.
+      JWT_ACCESS_EXPIRES_IN: "60m"
       AUDIT_HMAC_SECRET: ci-audit-secret-with-at-least-32-chars
       LOCAL_JWT_MOCK: "true"
       STORAGE_DRIVER: minio
@@ -145,7 +234,7 @@ jobs:
       MINIO_PORT: 9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
-      MEILISEARCH_HOST: http://127.0.0.1:7700
+      MEILISEARCH_HOST: http://127.0.0.1:9700
       MEILISEARCH_MASTER_KEY: devmasterkey123
       CLAMAV_ENABLED: "true"
       CLAMAV_HOST: 127.0.0.1
@@ -164,15 +253,38 @@ jobs:
       CAMS_VERIFY_BASE_URL: http://localhost:7101/verify
       NEXT_PUBLIC_API_BASE_URL: http://localhost:7100/api/v1
       NEXT_PUBLIC_SOCKET_URL: http://localhost:7100
+      # The login page shows the email form only when this is "true" (it is set in .env.development and nowhere else);
+      # without it the browser flows see only "Sign in with SSO" and cannot sign in (auth.setup.ts times out on the email box).
+      NEXT_PUBLIC_DEV_LOGIN: "true"
+      # db:seed:core seats this account in two tenants (examplecorp and demo-org),
+      # which verify-phase2-tenancy.ts needs for its tenant-selection checks.
+      VERIFY_MULTITENANT_EMAIL: admin@edams.local
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
       - run: npm install
+      # DMS signs its own session tokens with an RSA pair kept in the environment
+      # (DEV_RSA_*). A fresh pair for this job only, never stored anywhere.
+      - name: Generate throwaway session signing keys
+        run: node backend/scripts/generate-rsa-keys.js | grep '^DEV_RSA_' >> "$GITHUB_ENV"
       - name: Start development dependencies
-        run: docker compose -f docker-compose.dev.yml up -d
+        # The CI override swaps the MinIO image (no longer pullable from
+        # quay.io); see .github/ci/docker-compose.ci.yml. docker-compose.dev.yml
+        # itself stays untouched.
+        run: docker compose -f docker-compose.dev.yml -f .github/ci/docker-compose.ci.yml up -d
+      - name: Wait for MinIO
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.dev.yml -f .github/ci/docker-compose.ci.yml logs minio
+          exit 1
       - name: Wait for ClamAV
         run: |
           for i in {1..120}; do
@@ -181,10 +293,24 @@ jobs:
             fi
             sleep 2
           done
-          docker compose -f docker-compose.dev.yml logs clamav
+          docker compose -f docker-compose.dev.yml -f .github/ci/docker-compose.ci.yml logs clamav
           exit 1
       - run: npm --workspace backend run db:migrate
       - run: npm --workspace backend run db:seed:core
+      # test-acl-ancestry and other verifiers work in the QA tenant. The seeder
+      # needs a platform administrator, which only the vault can create; the CI
+      # database is thrown away, so .github/ci/seed-ci-platform-admin.sql sets a
+      # public throwaway vault password and makes one.
+      - name: Create the throwaway platform administrator
+        run: psql -v ON_ERROR_STOP=1 -f .github/ci/seed-ci-platform-admin.sql
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: change-me-dev-password
+          PGDATABASE: DMS
+      - name: Seed the QA tenant
+        run: npm --workspace backend run db:seed:qa
       - name: Start backend and worker
         run: npm --workspace backend run dev > backend-full-stack.log 2>&1 &
       - name: Wait for backend
@@ -224,7 +350,7 @@ jobs:
           if-no-files-found: ignore
       - name: Stop development dependencies
         if: always()
-        run: docker compose -f docker-compose.dev.yml down -v
+        run: docker compose -f docker-compose.dev.yml -f .github/ci/docker-compose.ci.yml down -v
 
   # Documentations/rollout.md §5.3: build the deploy artifact on every push/PR (catches a
   # broken Dockerfile immediately), but only PUSH it to the registry on main
@@ -238,8 +364,11 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: docker/setup-buildx-action@v3
+      # Registry paths must be lowercase; the repository name is DawitBK/dms-saas.
+      - name: Lowercase image prefix
+        run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
       - name: Build backend image
         uses: docker/build-push-action@v6
         with:
@@ -284,7 +413,7 @@ jobs:
           file: backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}-backend:${{ github.sha }}
       - name: Push frontend image (main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
@@ -296,4 +425,4 @@ jobs:
             NEXT_PUBLIC_API_BASE_URL=https://ci-placeholder.invalid/api/v1
             NEXT_PUBLIC_SOCKET_URL=https://ci-placeholder.invalid
           tags: |
-            ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}-frontend:${{ github.sha }}

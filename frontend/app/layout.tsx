@@ -4,6 +4,7 @@ import { Providers } from '../providers/Providers';
 import { Sidebar } from '../shared/components/Sidebar';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 import { GlobalErrorReporter } from '../shared/components/GlobalErrorReporter';
+import { LicenseBanner } from '../shared/components/LicenseBanner';
 import { API_BASE_URL } from '../shared/lib/apiConfig';
 import { withBasePath } from '../shared/lib/basePath';
 
@@ -48,6 +49,7 @@ export default function RootLayout({
               <Sidebar />
             </Suspense>
             <main className="flex-1 flex flex-col overflow-hidden">
+              <LicenseBanner />
               <ErrorBoundary>{children}</ErrorBoundary>
             </main>
           </div>

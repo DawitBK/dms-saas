@@ -15,6 +15,8 @@ WORKDIR /repo
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/package.json
 COPY frontend/package.json ./frontend/package.json
+# frontend/package.json depends on "xlsx": "file:../vendor/xlsx-0.20.3.tgz"; npm ci cannot resolve it without the tarball
+COPY vendor ./vendor
 RUN npm ci
 
 FROM deps AS build
@@ -31,6 +33,12 @@ ARG NEXT_PUBLIC_BASE_PATH
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
 ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+# `npm run build` ends with a postbuild step (scripts/build-fingerprint.cjs) that
+# hashes frontend/.env.production and stamps it into .next, and fails when the
+# file is missing. It is gitignored, so a clean checkout (CI) has none. Write one
+# from the build args only when the build context did not bring a real one; the
+# ENV values above already take precedence inside `next build` either way.
+RUN [ -f frontend/.env.production ] || printf 'NEXT_PUBLIC_API_BASE_URL=%s\nNEXT_PUBLIC_SOCKET_URL=%s\nNEXT_PUBLIC_BASE_PATH=%s\n' "$NEXT_PUBLIC_API_BASE_URL" "$NEXT_PUBLIC_SOCKET_URL" "$NEXT_PUBLIC_BASE_PATH" > frontend/.env.production
 RUN npm run build --workspace frontend
 
 FROM node:22-bookworm-slim AS runtime

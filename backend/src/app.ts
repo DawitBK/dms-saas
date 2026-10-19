@@ -21,6 +21,7 @@ import { createTusHandler } from './modules/documents/tusUpload.js';
 import { metricsMiddleware } from './infrastructure/metrics.js';
 import { createRedisRateLimitStore } from './infrastructure/cache/rateLimitStore.js';
 import { tenantAwareKeyGenerator } from './shared/rateLimitKey.js';
+import { licenseGate } from './modules/license/licenseGate.js';
 
 // JWKS cached in-process â€” recomputing RSA key on every request is unnecessary
 let jwksCache: { keys: unknown[] } | null = null;
@@ -132,8 +133,10 @@ export function createApp() {
   // — e.g. AUDITOR — could create documents here, unlike the buffered upload
   // route. Enforce the same permission the buffered route uses.
   const requireUpload = requirePermission(PERMISSIONS.DOCUMENT_UPLOAD);
-  app.all(TUS_PATH, authenticate as any, requireUpload as any, tusHandler);
-  app.all(`${TUS_PATH}/*path`, authenticate as any, requireUpload as any, tusHandler);
+  // licenseGate: a TUS upload is a write, so it is refused once a verified licence has expired (see
+  // modules/license/licenseGate.ts); HEAD/OPTIONS pass. This mount is outside the v1 router, so it needs its own.
+  app.all(TUS_PATH, licenseGate as any, authenticate as any, requireUpload as any, tusHandler);
+  app.all(`${TUS_PATH}/*path`, licenseGate as any, authenticate as any, requireUpload as any, tusHandler);
 
   // preserveRequestContext: both parsers consume the request stream, and a
   // body over the 64 KB socket read boundary makes them call next() from a
@@ -286,7 +289,8 @@ export function createApp() {
       path.startsWith('/webhooks') ||
       path.startsWith('/legal-hold') ||
       path.startsWith('/tenants') ||
-      path.startsWith('/assignment-advisory')
+      path.startsWith('/assignment-advisory') ||
+      path.startsWith('/license')
     ) {
       // FIX 2026-10-10: same class of bug as the buckets above. These prefixes fell through to the generic
       // `private, max-age=10` bucket, and each one is read by the very screen that mutates it (switch an approval

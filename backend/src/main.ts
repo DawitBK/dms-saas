@@ -15,6 +15,7 @@ import { assertRedisVersion } from './infrastructure/cache/redis.js';
 import { reportAntivirusReadiness } from './infrastructure/antivirus/clamscan.js';
 import { reportKekReadiness } from './infrastructure/vault/kekSelfTest.js';
 import { reportFatalCrash } from './infrastructure/alerting/adminAlerts.js';
+import { startLicensePolling, stopLicensePolling } from './modules/license/license.service.js';
 
 /** Never let alerting itself delay a process that is already exiting. */
 function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T | void> {
@@ -68,6 +69,10 @@ async function bootstrap() {
     startOutboxPolling();
   }
 
+  // Platform licensing: API process only (the worker needs no enforcement). Loads the persisted token, then
+  // polls SSO; never throws and never delays boot (modules/license/license.service.ts).
+  void startLicensePolling().catch((error) => logger.warn({ error }, 'licence: poller failed to start (nothing is enforced until it does)'));
+
   let shuttingDown = false;
   async function shutdown(signal: string) {
     if (shuttingDown) return;
@@ -80,6 +85,7 @@ async function bootstrap() {
     forceExit.unref();
 
     stopOutboxPolling();
+    stopLicensePolling();
     await Promise.allSettled([
       new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));

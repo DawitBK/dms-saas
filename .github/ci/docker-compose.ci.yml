@@ -1,0 +1,17 @@
+# CI-only override, used as a second `-f` after docker-compose.dev.yml:
+#   docker compose -f docker-compose.dev.yml -f .github/ci/docker-compose.ci.yml up -d
+#
+# docker-compose.dev.yml is deliberately NOT edited: the production-mirror
+# scripts on the owner's machine use it. MinIO stopped publishing public images
+# (quay.io/minio/minio now answers "unauthorized"); the only image that still
+# resolves without credentials is Chainguard's. Same server command and
+# credentials as the dev file, which compose merges in.
+#
+# The Chainguard image is distroless (no shell, curl or mc), so there is no
+# in-container healthcheck: the workflow waits on /minio/health/live from the
+# host instead. It runs as root only so the fresh named volume is writable.
+services:
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    user: "0:0"
+    command: ["server", "/data", "--console-address", ":9001"]
