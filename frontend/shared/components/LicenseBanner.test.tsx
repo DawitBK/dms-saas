@@ -1,11 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { LicenseStatus } from '../lib/license';
 
 const useLicenseStatus = vi.fn();
-const can = vi.fn();
 vi.mock('../hooks/useLicense', () => ({ useLicenseStatus: () => useLicenseStatus() }));
-vi.mock('../hooks/usePermissions', () => ({ usePermissions: () => ({ can }) }));
 
 import { LicenseBanner } from './LicenseBanner';
 
@@ -17,7 +15,6 @@ const status = (over: Partial<LicenseStatus>): LicenseStatus => ({
 
 beforeEach(() => {
   useLicenseStatus.mockReset();
-  can.mockReset().mockReturnValue(false);
 });
 
 describe('LicenseBanner', () => {
@@ -47,18 +44,9 @@ describe('LicenseBanner', () => {
     expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
   });
 
-  it('unconfigured: hidden from ordinary users', () => {
+  it('unconfigured: never shows a message, to anyone', () => {
     useLicenseStatus.mockReturnValue({ data: status({ state: 'unconfigured' }) });
     const { container } = render(<LicenseBanner />);
     expect(container).toBeEmptyDOMElement();
-  });
-
-  it('unconfigured: a quiet, dismissible notice for administrators', () => {
-    can.mockReturnValue(true);
-    useLicenseStatus.mockReturnValue({ data: status({ state: 'unconfigured' }) });
-    render(<LicenseBanner />);
-    expect(screen.getByTestId('license-banner')).toHaveTextContent('No licence configured');
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(screen.queryByTestId('license-banner')).toBeNull();
   });
 });

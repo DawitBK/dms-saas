@@ -32,8 +32,8 @@ const base: LicenseStatus = {
   enforcement: 'enforce',
 };
 const st = (over: Partial<LicenseStatus>): LicenseStatus => ({ ...base, ...over });
-const banner = (s: LicenseStatus | null | undefined, isAdmin = false, now = new Date('2027-06-20T12:00:00.000Z')) =>
-  licenseBanner(s, { isAdmin, now, locale: 'en-US' });
+const banner = (s: LicenseStatus | null | undefined, now = new Date('2027-06-20T12:00:00.000Z')) =>
+  licenseBanner(s, { now, locale: 'en-US' });
 
 describe('licenseBanner', () => {
   it('shows nothing without a status (loading, an older backend, the API down): the UI fails open', () => {
@@ -42,16 +42,9 @@ describe('licenseBanner', () => {
   });
 
   it('shows nothing for active and unknown, for anyone', () => {
-    for (const state of ['active', 'unknown'] as const) {
-      expect(banner(st({ state }), true)).toBeNull();
-      expect(banner(st({ state }), false)).toBeNull();
+    for (const state of ['active', 'unknown', 'unconfigured'] as const) {
+      expect(banner(st({ state }))).toBeNull();
     }
-  });
-
-  it('unconfigured: a quiet notice for administrators only', () => {
-    const model = banner(st({ state: 'unconfigured', expiresAt: null }), true);
-    expect(model).toMatchObject({ tone: 'muted', title: 'No licence configured' });
-    expect(banner(st({ state: 'unconfigured', expiresAt: null }), false)).toBeNull();
   });
 
   it('expiring: a warning with the day count and the date', () => {
@@ -67,7 +60,7 @@ describe('licenseBanner', () => {
   });
 
   it('grace: a warning that says everything still works, until when, and how long is left', () => {
-    const model = banner(st({ state: 'grace', daysRemaining: -5 }), false, new Date('2027-06-20T12:00:00.000Z'));
+    const model = banner(st({ state: 'grace', daysRemaining: -5 }), new Date('2027-06-20T12:00:00.000Z'));
     expect(model?.tone).toBe('warning');
     expect(model?.title).toMatch(/grace/i);
     expect(model?.body).toContain('Everything keeps working');

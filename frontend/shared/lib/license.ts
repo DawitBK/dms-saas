@@ -144,7 +144,7 @@ export function isNavHrefLicensed(href: string, isModuleOn: (key: LicenseModuleK
 // ── banner ───────────────────────────────────────────────────────────────────────────────────────────────
 
 export interface LicenseBannerModel {
-  tone: 'warning' | 'danger' | 'muted';
+  tone: 'warning' | 'danger';
   title: string;
   body: string;
 }
@@ -161,27 +161,18 @@ export function formatLicenseDate(iso: string | null | undefined, locale?: strin
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /**
- * What to tell the user, or null for nothing. `active` and `unknown` never show anything; `unconfigured` shows a quiet
- * line to administrators only (`isAdmin`), because for everyone else it is not actionable and not an error.
+ * What to tell the user, or null for nothing. `active`, `unknown` and `unconfigured` never show anything (owner decision
+ * 2026-10-19: "no licence configured" is not a message anyone should see).
  */
 export function licenseBanner(
   status: LicenseStatus | null | undefined,
-  opts: { isAdmin: boolean; now?: Date; locale?: string },
+  opts: { now?: Date; locale?: string } = {},
 ): LicenseBannerModel | null {
   if (!status) return null;
   const now = opts.now ?? new Date();
   const on = formatLicenseDate(status.expiresAt, opts.locale);
 
   switch (status.state) {
-    case 'unconfigured':
-      return opts.isAdmin
-        ? {
-            tone: 'muted',
-            title: 'No licence configured',
-            body: 'DMS has no licence record in SSO, so nothing is limited. An administrator can add one under Licences in the SSO admin console.',
-          }
-        : null;
-
     case 'expiring': {
       const days = Math.max(0, status.daysRemaining ?? 0);
       return {
