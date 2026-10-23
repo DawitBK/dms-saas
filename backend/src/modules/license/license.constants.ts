@@ -20,6 +20,9 @@ export const LICENSE_TOKEN_AUDIENCE = `license:${LICENSE_SYSTEM}`;
  */
 export const LICENSE_SSO_PUBLIC_PATH = `/api/v1/licenses/public/${LICENSE_SYSTEM}`;
 
+/** SSO's "SSO ends on this date" note (licenseCeiling.ts, contract section 10): DMS ends no later than SSO does. `GET {LICENSE_SSO_URL}<this>`. */
+export const LICENSE_SSO_CEILING_PATH = "/api/v1/licenses/public/sso-expiry";
+
 /** Timeout for a fetch from SSO (contract section 6). */
 export const LICENSE_FETCH_TIMEOUT_MS = 5_000;
 

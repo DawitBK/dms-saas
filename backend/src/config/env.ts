@@ -552,6 +552,18 @@ const envSchema = z.object({
   // that verify one (SSO's JWKS is not trusted for licences); when it is false they are used if set, otherwise the
   // SSO JWKS as before. Kept as the raw string: parsed (and a bad value reported) in modules/license/license.service.ts.
   LICENSE_TRUST_PUBLIC_KEYS: optionalString,
+  // Incident containment: while this FILE exists every state-changing request answers 403 INCIDENT_READ_ONLY (sign-in, health and the licence routes
+  // excepted; modules/license/incidentGate.ts). Unset = off (development). The release tooling sets it to <data-dir>/incident.lock; the owner clears it
+  // from a terminal with deploy/tamper/tamper.cjs, never through the web.
+  INCIDENT_LOCK_FILE: optionalString,
+  // Owner-only operations (today: creating a tenant) need a single-use owner TICKET issued by SSO for that operation
+  // (modules/auth/ownerAuthorisation.ts). Default true when NODE_ENV is production or mirror, false otherwise
+  // (development and tests keep working exactly as before). When true, a missing ticket answers 403
+  // OWNER_AUTHORISATION_REQUIRED, a bad one 403 OWNER_AUTHORISATION_INVALID, and an unreachable SSO key set 503.
+  OWNER_VERIFICATION_REQUIRED: z.preprocess(
+    (v) => (v === "" || v === undefined ? process.env.NODE_ENV === "production" || process.env.NODE_ENV === "mirror" : v),
+    boolFromString,
+  ),
   ENABLE_QUEUE_WORKERS: boolFromString.default(true),
   ENABLE_OUTBOX_POLLING: boolFromString.default(true),
   OUTBOX_POLL_INTERVAL_MS: z.coerce.number().default(5000),

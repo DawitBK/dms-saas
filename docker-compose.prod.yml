@@ -103,6 +103,8 @@ x-backend-env: &backend-env
   # Per-application entitlement (contract section 9): required by default in production; the ONLY keys that may sign a licence.
   LICENSE_REQUIRED: ${LICENSE_REQUIRED:-true}
   LICENSE_TRUST_PUBLIC_KEYS: ${LICENSE_TRUST_PUBLIC_KEYS:-}
+  # Owner-only operations (creating a tenant) need a single-use owner ticket issued by SSO; required by default in production.
+  OWNER_VERIFICATION_REQUIRED: ${OWNER_VERIFICATION_REQUIRED:-true}
 
 services:
   migrate:

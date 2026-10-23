@@ -27,6 +27,7 @@ import { PERMISSIONS } from '../../shared/lib/permissions';
 import { usePermissions } from '../../shared/hooks/usePermissions';
 import { useAuthStore } from '../../state/auth.store';
 import { getErrorMessage as parseApiError } from '../../shared/lib/errorMessage';
+import { ownerTicketHeaders } from '../../shared/lib/ownerTicket';
 
 type FolderNode = {
   id: string;
@@ -102,6 +103,8 @@ export function TenantsCrudPanel() {
     maxUsers: '50',
     maxDocuments: '100000',
   });
+  // Owner-only: a single-use ticket issued by SSO (Owner verification), sent as X-Owner-Authorisation.
+  const [ownerTicket, setOwnerTicket] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -123,6 +126,7 @@ export function TenantsCrudPanel() {
       if (modal === 'create') {
         return apiClient('/tenants', {
           method: 'POST',
+          headers: ownerTicketHeaders(ownerTicket),
           body: JSON.stringify({ id: form.id.trim().toLowerCase(), ...payload }),
         });
       }
@@ -134,6 +138,7 @@ export function TenantsCrudPanel() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-tenants'] });
       toast.success(modal === 'create' ? 'Tenant created' : 'Tenant updated');
+      setOwnerTicket(''); // single use: never keep a spent ticket
       setModal(null);
       setEditId(null);
     },
@@ -177,6 +182,7 @@ export function TenantsCrudPanel() {
       maxDocuments: '100000',
     });
     setFieldError(null);
+    setOwnerTicket('');
     setModal('create');
   };
 
@@ -404,6 +410,30 @@ export function TenantsCrudPanel() {
                 />
               </div>
             </div>
+            {modal === 'create' && (
+              <div>
+                <label
+                  htmlFor="tenant-owner-ticket"
+                  className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5"
+                >
+                  Owner authorisation ticket
+                </label>
+                <textarea
+                  id="tenant-owner-ticket"
+                  className="ui-input font-mono text-xs"
+                  rows={3}
+                  value={ownerTicket}
+                  onChange={(e) => setOwnerTicket(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-describedby="tenant-owner-ticket-help"
+                />
+                <p id="tenant-owner-ticket-help" className="text-xs text-text-muted mt-1">
+                  Get one in SSO &gt; Owner verification (valid for 5 minutes, works once). Required on the live server; leave
+                  empty in development.
+                </p>
+              </div>
+            )}
             {fieldError && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                 {fieldError}

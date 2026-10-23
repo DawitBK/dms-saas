@@ -3,6 +3,7 @@ import { excludeHiddenWhere, hiddenUserIds, isHiddenUser } from "../../shared/pl
 import { Router } from "express";
 import { asyncHandler } from "../../shared/asyncHandler.js";
 import { requirePermission } from "../../shared/auth.js";
+import { OPERATION_TENANT_CREATE, requireOwnerAuthorisation } from "../auth/ownerAuthorisation.js";
 import { AppError } from "../../core/AppError.js";
 import { PERMISSIONS } from "../../config/permissions.js";
 import {
@@ -52,7 +53,10 @@ tenantRoutes.get("/", requirePermission(PERMISSIONS.TENANT_READ), asyncHandler(a
 // Previously gated on tenant:manage, which every tenant's own SYSTEM_ADMIN
 // holds, so any customer's admin could spin up an unrelated tenant for a
 // different company. Only platform:admin holders can create tenants now.
-tenantRoutes.post("/", requirePermission(PERMISSIONS.PLATFORM_ADMIN), asyncHandler(async (req, res) =>
+// 2026-10-19: and, when OWNER_VERIFICATION_REQUIRED is on (production and mirror by default), only with a single-use
+// owner ticket issued by SSO for "dms.tenant.create" (X-Owner-Authorisation header): a stolen platform-admin session is
+// not enough. PATCH/DELETE on a tenant stay tenant:manage (a tenant's own admin) and are deliberately not owner-only.
+tenantRoutes.post("/", requirePermission(PERMISSIONS.PLATFORM_ADMIN), requireOwnerAuthorisation(OPERATION_TENANT_CREATE), asyncHandler(async (req, res) =>
   res.status(201).json({ data: await createTenant(req.body, req.user!.userId) })
 ));
 tenantRoutes.get("/:id", requirePermission(PERMISSIONS.TENANT_READ), asyncHandler(async (req, res) => {

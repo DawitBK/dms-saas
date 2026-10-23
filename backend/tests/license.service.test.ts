@@ -196,7 +196,7 @@ describe("principle 2: never block because SSO is unreachable", () => {
     const fetchMock = installFetch({ license: ok(), jwks });
     const [a, b] = await Promise.all([refreshLicense(), refreshLicense()]);
     expect(a).toBe(b);
-    expect(fetchMock.mock.calls.filter((c) => String(c[0]).includes("/licenses/public/")).length).toBe(1);
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).includes("/licenses/public/dms")).length).toBe(1);
   });
 
   it("JWKS unreachable while a token is being verified (cold key cache): rejected, the persisted token stays in force", async () => {
@@ -335,7 +335,7 @@ describe("polling", () => {
     const fetchMock = installFetch({ license: ok(), jwks });
     await startLicensePolling();
     await jest.advanceTimersByTimeAsync(0);
-    const polls = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes("/licenses/public/")).length;
+    const polls = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes("/licenses/public/dms")).length;
     expect(polls()).toBe(1);
     await jest.advanceTimersByTimeAsync(60_000);
     expect(polls()).toBe(2);

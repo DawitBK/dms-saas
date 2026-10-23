@@ -5,7 +5,7 @@
 | Metric | Result |
 |---|---|
 | Product | DMS |
-| Test suites | 109 passed / 109 total |
-| Tests | 1415 passed / 1415 total |
+| Test suites | 116 passed / 116 total |
+| Tests | 1639 passed / 1639 total |
 | Failed | 0 |
 | Status | PASS |

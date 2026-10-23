@@ -2021,7 +2021,7 @@ function isAbortError(err: unknown): boolean {
 }
 
 /** Fetch (or return cached) JWKS from AUTH_JWKS_URI, return kid→PEM map. */
-async function getJwksPems(
+export async function getJwksPems(
   forceRefresh = false,
 ): Promise<Record<string, string>> {
   const now = Date.now();

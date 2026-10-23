@@ -22,6 +22,7 @@ import { metricsMiddleware } from './infrastructure/metrics.js';
 import { createRedisRateLimitStore } from './infrastructure/cache/rateLimitStore.js';
 import { tenantAwareKeyGenerator } from './shared/rateLimitKey.js';
 import { licenseGate } from './modules/license/licenseGate.js';
+import { incidentGate } from './modules/license/incidentGate.js';
 
 // JWKS cached in-process â€” recomputing RSA key on every request is unnecessary
 let jwksCache: { keys: unknown[] } | null = null;
@@ -135,8 +136,8 @@ export function createApp() {
   const requireUpload = requirePermission(PERMISSIONS.DOCUMENT_UPLOAD);
   // licenseGate: a TUS upload is a write, so it is refused once a verified licence has expired (see
   // modules/license/licenseGate.ts); HEAD/OPTIONS pass. This mount is outside the v1 router, so it needs its own.
-  app.all(TUS_PATH, licenseGate as any, authenticate as any, requireUpload as any, tusHandler);
-  app.all(`${TUS_PATH}/*path`, licenseGate as any, authenticate as any, requireUpload as any, tusHandler);
+  app.all(TUS_PATH, incidentGate as any, licenseGate as any, authenticate as any, requireUpload as any, tusHandler);
+  app.all(`${TUS_PATH}/*path`, incidentGate as any, licenseGate as any, authenticate as any, requireUpload as any, tusHandler);
 
   // preserveRequestContext: both parsers consume the request stream, and a
   // body over the 64 KB socket read boundary makes them call next() from a

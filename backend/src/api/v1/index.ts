@@ -35,6 +35,7 @@ import { assignmentAdvisoryRoutes } from "../../modules/assignment-advisory/assi
 import { featureFlagsRoutes } from "../../modules/feature-flags/featureFlags.routes.js";
 import { licensePublicRoutes, licenseRoutes } from "../../modules/license/license.routes.js";
 import { licenseGate } from "../../modules/license/licenseGate.js";
+import { incidentGate } from "../../modules/license/incidentGate.js";
 import { authenticate, requirePermission } from "../../shared/auth.js";
 import { admissionControl, tenantContext } from "../../shared/middleware.js";
 import { PERMISSIONS } from "../../config/permissions.js";
@@ -46,6 +47,8 @@ export const v1Routes = Router();
 // Platform licensing (docs/operations/PLATFORM-LICENSING.md): the module gate and, once a verified licence has
 // expired, the read-only guard. FIRST on purpose, so it also covers the public e-signing routes below and the
 // /operations and /internal routers; it fails open on any fault and never reads req.user. See modules/license/.
+// Read-only containment while an incident lock is in force (INCIDENT_LOCK_FILE; unset = no effect): ahead of the licence gate, it needs no licence.
+v1Routes.use(incidentGate);
 v1Routes.use(licenseGate);
 
 v1Routes.use("/auth", authRoutes);

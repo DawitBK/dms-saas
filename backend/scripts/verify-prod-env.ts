@@ -104,6 +104,8 @@ line("LICENSE_SSO_URL", shown(config.LICENSE_SSO_URL));
 line("LICENSE_POLL_SECONDS", String(config.LICENSE_POLL_SECONDS));
 line("LICENSE_REQUIRED", config.LICENSE_REQUIRED ? "true" : "false  <- this system runs WITHOUT needing a licence");
 line("LICENSE_TRUST_PUBLIC_KEYS", config.LICENSE_TRUST_PUBLIC_KEYS ? "set" : "(unset: no licence can verify while LICENSE_REQUIRED is true)");
+line("INCIDENT_LOCK_FILE", config.INCIDENT_LOCK_FILE ? "set (a file there makes the system read-only)" : "(unset: no incident containment from a lock file)");
+line("OWNER_VERIFICATION_REQUIRED", config.OWNER_VERIFICATION_REQUIRED ? "true" : "false  <- owner-only operations need no SSO ticket");
 console.log("");
 
 console.log("Process roles and exposure");

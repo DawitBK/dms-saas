@@ -22,7 +22,7 @@
   the one piece of the backup story with no scheduling path at all.
 
   Two things this does NOT solve, both recorded in
-  archive/history/reports/LIVE-DEPLOYMENT-REPORT-2026-09-07.md (platform repo root):
+  history/reports/LIVE-DEPLOYMENT-REPORT-2026-09-07.md (platform repo root):
 
     1. BACKUP_STORAGE_PATH is on the same physical disk as the source. This
        server's B: and C: are two partitions of one 450 GB virtual disk, so
