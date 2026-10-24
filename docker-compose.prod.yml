@@ -6,8 +6,8 @@
 #
 # Design:
 #   - NO secrets in this file — everything comes from .env.prod (gitignored).
-#   - This server hosts GMS/DMS/SSO/MRS behind ONE shared Apache reverse proxy
-#     (see /DEPLOYMENT-GUIDE.md), which owns 80/443 and does path routing
+#   - This server hosts GMS/DMS/SSO/MRS behind ONE shared Apache reverse proxy,
+#     which owns 80/443 and does path routing
 #     (/gms, /dms, /sso, /mrs). Caddy is therefore dropped from this compose
 #     file entirely — backend/frontend publish to 127.0.0.1 only, and Apache
 #     proxies /dms -> 127.0.0.1:7101, /dms/api/v1 -> 127.0.0.1:7100/api/v1.
@@ -287,7 +287,7 @@ services:
     # (shared_buffers ~25%, effective_cache_size ~60%) — re-tune both
     # together if the memory limit changes.
     #
-    # R-01 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): max_connections raised from the
+    # R-01 (audit 2026-09-03): max_connections raised from the
     # image default of 100 to 300. The earlier note here said 100 "wasn't the
     # actual constraint" because a live check found only ~13 connections in
     # use — true at the time, and beside the point. The constraint is not

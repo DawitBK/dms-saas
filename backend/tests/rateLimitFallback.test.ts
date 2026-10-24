@@ -1,4 +1,4 @@
-// R-03 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): the Redis rate-limit store used to
+// R-03 (audit 2026-09-03): the Redis rate-limit store used to
 // fail fully OPEN — on any Redis error it returned a flat `totalHits: 1`, so
 // every request looked like the first in its window and a Redis blip silently
 // removed brute-force protection from /api/v1/auth with nothing but a log

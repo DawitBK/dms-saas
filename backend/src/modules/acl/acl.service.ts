@@ -17,7 +17,7 @@ import { writeAuditLog } from "../audit/audit.service.js";
 import { AUDIT_EVENTS } from "../audit/auditEvents.js";
 
 /**
- * SECURITY FIX (AUDIT-FINDINGS-2026-08-11 roles/permissions sweep #1):
+ * SECURITY FIX (audit 2026-08-11 roles/permissions sweep #1):
  * createAclEntry/createBulkAclEntries previously wrote an ACL row for any
  * resourceId with no check that the underlying resource actually belongs to
  * the caller's own tenant — an ACL_MANAGE holder in tenant A could write a
@@ -428,7 +428,7 @@ export async function deleteAclEntriesForPrincipal(
       });
 
       if (deleted > 0) {
-        // AUDIT-FINDINGS-2026-08-11 data-flow sweep #2: bulk revoke had the
+        // audit 2026-08-11 data-flow sweep #2: bulk revoke had the
         // same missing-audit gap as bulk create above.
         await writeAuditLog({
           eventType: AUDIT_EVENTS.ACL_ENTRIES_PRINCIPAL_DELETED,
@@ -597,7 +597,7 @@ export async function createBulkAclEntries(
         throw err;
       }
 
-      // AUDIT-FINDINGS-2026-08-11 data-flow sweep #2: the single-entry sibling
+      // audit 2026-08-11 data-flow sweep #2: the single-entry sibling
       // createAclEntry awaits an audit write inside this same transaction —
       // this bulk variant (the higher-blast-radius case: many permissions/
       // resources at once) never did, leaving ACL_ENTRIES_BULK_CREATED a dead

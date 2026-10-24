@@ -114,7 +114,7 @@ export const AUDIT_EVENTS = {
   SIGN_REQUEST: 'SIGN_REQUEST',
   SIGN_DECLINE: 'SIGN_DECLINE',
   SIGN_VERIFY: 'SIGN_VERIFY',
-  // AUDIT-FINDINGS-2026-08-11 lifecycle sweep #5: a ceremony timing out is a
+  // audit 2026-08-11 lifecycle sweep #5: a ceremony timing out is a
   // real PENDING_SIGNATURE -> SIGNING_DECLINED transition (routeExpiredCeremonyDocument)
   // but previously had no matching audit event at all, unlike every other
   // status flip in the esigning module.

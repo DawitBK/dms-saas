@@ -158,7 +158,7 @@ export async function resolveOidcUser(identity: OidcIdentity, defaultTenantId: s
   // under one advisory lock held to commit (licenseSeats.withSeatGuard), so two simultaneous first logins at
   // limit-1 cannot both take the last seat.
 
-  // withSeatGuard (a runInTransaction): DMS/CLAUDE.md makes
+  // withSeatGuard (a runInTransaction): this project makes
   // that the convention for request-path writes. Here it lands on the fallback
   // branch (this is a public route, so tenantContext has not opened an ambient
   // transaction) which is exactly the real transaction wanted.

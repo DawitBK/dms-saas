@@ -20,7 +20,7 @@ const loggerOptions: pino.LoggerOptions = {
 };
 
 // In production this process runs as a bare `node dist/src/main.js` in a
-// console window (no Docker, no PM2 — see SERVER-INFRASTRUCTURE-AUDIT.md),
+// console window (no Docker, no PM2),
 // not inside a container where a log driver captures stdout. Without an
 // explicit file destination, every production log line only ever existed in
 // that window's scrollback and was lost the moment it closed. Mirrors GMS's

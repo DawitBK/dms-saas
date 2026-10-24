@@ -1,6 +1,6 @@
 /**
  * Load-safety and realtime-transport verification — R-01 and the F-06
- * follow-up of Documentations/audits/AUDIT-FINDINGS-2026-09-03.md.
+ * follow-up of audit 2026-09-03.
  *
  * Three properties that the unit tests cannot prove, because each of them is
  * about the real server, the real database, or the real wire:

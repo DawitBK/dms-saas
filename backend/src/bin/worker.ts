@@ -49,7 +49,7 @@ async function main() {
 
   // Same safety net as main.ts's bootstrap() — log full diagnostics before
   // this process exits instead of vanishing silently. Now that workers run
-  // in their own process (see DMS/CLAUDE.md), a crash here no longer takes
+  // in their own process, a crash here no longer takes
   // the API server down with it, but it should still never be a total
   // mystery why it happened.
   process.on("uncaughtException", (error) => {

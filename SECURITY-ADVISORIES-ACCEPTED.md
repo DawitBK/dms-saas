@@ -1,7 +1,7 @@
 # Dependency advisories that remain, and why
 
 Checked with `npm audit --omit=dev` on 2026-10-10 after `npm audit fix` (all three frontends are now on Next 16.4.0, which cleared the critical advisory).
-Re-run `npm audit --omit=dev` in `DMS/`, `SSO/backend`, `GMS/backend` and `GMS/frontend` after any dependency change and update this list.
+Re-run `npm audit --omit=dev` in this repository (DMS), and in the SSO backend, the GMS backend and the GMS frontend (their own editions), after any dependency change and update this list.
 
 | Package (where) | Severity | Why it is still here | Why it is acceptable now |
 |---|---|---|---|

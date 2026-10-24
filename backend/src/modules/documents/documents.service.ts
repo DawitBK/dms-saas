@@ -1023,7 +1023,7 @@ async function voidInFlightCeremoniesOnReapproval(
         { accessToken: null, accessTokenHash: null, accessTokenExpires: null },
         { where: { signatureRequestId: { [Op.in]: ids }, status: { [Op.in]: ['pending', 'viewed'] } }, transaction: tx },
       );
-      // AUDIT-FINDINGS-2026-08-11 lifecycle sweep #7: same silent-void gap as
+      // audit 2026-08-11 lifecycle sweep #7: same silent-void gap as
       // trashService.moveToTrash — a signer with the page open otherwise saw
       // no update when a new version superseded their in-flight ceremony.
       const voidedDoc = await Document.findByPk(documentId, { attributes: ['departmentId', 'tenantId'], transaction: tx });

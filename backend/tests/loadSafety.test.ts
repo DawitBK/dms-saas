@@ -1,4 +1,4 @@
-// R-01 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): behaviour AT and PAST the concurrency
+// R-01 (audit 2026-09-03): behaviour AT and PAST the concurrency
 // ceiling.
 //
 // tenantContext holds one pooled DB connection for the full lifetime of every

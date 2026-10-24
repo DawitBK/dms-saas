@@ -21,8 +21,7 @@
   databases but nothing equivalent for the document store, so the file half was
   the one piece of the backup story with no scheduling path at all.
 
-  Two things this does NOT solve, both recorded in
-  history/reports/LIVE-DEPLOYMENT-REPORT-2026-09-07.md (platform repo root):
+  Two things this does NOT solve:
 
     1. BACKUP_STORAGE_PATH is on the same physical disk as the source. This
        server's B: and C: are two partitions of one 450 GB virtual disk, so

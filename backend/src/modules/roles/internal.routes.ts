@@ -1,4 +1,4 @@
-// Internal admin API for the IdP's admin console (IdP/identity/src/admin/router.ts)
+// Internal admin API for the IdP's admin console (its admin router)
 // to manage DMS role permissions and per-user permission overrides on an
 // admin's behalf. Authenticated by a shared secret (shared/internalAuth.ts),
 // not a user JWT — the IdP has no DMS user session to act under. Mounted

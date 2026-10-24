@@ -54,7 +54,7 @@ export type NotificationType =
   // E-signing: an internal (dmsUserId) recipient is notified in-app when a
   // request is sent, rather than by the access-token email external signers get.
   | "ESIGN_REQUEST_ASSIGNED"
-  // AUDIT-FINDINGS-2026-08-11 data-flow sweep #8: neither a recipient
+  // audit 2026-08-11 data-flow sweep #8: neither a recipient
   // declining nor all-recipients-signed completion notified the SENDER
   // (SignatureRequest.createdBy) — only enqueueWebsocketEvent (realtime-only,
   // missed if they aren't watching the page), unlike letters' equivalent

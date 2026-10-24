@@ -1,6 +1,6 @@
 export {};
 
-// Forms approver selection (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md, item 3).
+// Forms approver selection (audit 2026-09-03, item 3).
 //
 // The bug: `createFormInstance` called
 // `submitForApproval('FORM_INSTANCE', id, {}, user)` — an EMPTY step list — so

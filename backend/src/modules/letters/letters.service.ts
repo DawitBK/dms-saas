@@ -78,7 +78,7 @@ import { assertNotHiddenUser, maskHiddenUsersDeep, withoutHiddenIds } from '../.
 // A department head administers their own department and every sub-department
 // below it; tenant-wide authority (acl:bypass_admin / orgunit:manage) the whole tenant.
 import { assertCanManageDepartment } from '../../shared/orgScope.js';
-// R-08 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): the step-assignment/decision rules
+// R-08 (audit 2026-09-03): the step-assignment/decision rules
 // used to be implemented here AND again in approvals.service.ts, where the
 // copy was labelled "Mirror of letters' assertStepIsActionable" — and the
 // two had drifted. One implementation now, parameterised by domain profile.
@@ -663,7 +663,7 @@ async function findLetterDetail(where: Record<string, unknown>, viewerUserId: st
  *  document id, is this actually a filed letter (its final PDF, an
  *  attachment, or its cover sheet) — and if so, its full approval chain.
  *  Letters keep their own approval-chain implementation entirely separate
- *  from the unified approval engine (DMS/CLAUDE.md), so a letter-backed
+ *  from the unified approval engine, so a letter-backed
  *  CORR document's generic Workflow tab has nothing to show even though the
  *  letter itself went through a complete, real review/approve chain — this
  *  is what lets that tab render the real thing instead of a false "not

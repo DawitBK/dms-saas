@@ -9,8 +9,8 @@ classification, versioning, approval, digital signing, archive, retention, legal
 hold and certified disposal — plus CAMS, the correspondence (incoming/outgoing
 letter) module built on top of it.
 
-It is one of three systems on the Example Corp platform (with GMS and SSO). See the
-repository root's `CLAUDE.md` and `/DEPLOYMENT-GUIDE.md` for the platform view.
+It is one of three systems on the Example Corp platform (with GMS and SSO). See
+[`Documentations/DMS-MASTER_DOC.md`](Documentations/DMS-MASTER_DOC.md) for how DMS fits the platform.
 
 **Documentation:** start at [`Documentations/README.md`](Documentations/README.md), the index: reading order, a by-task table, and where the audits, runbooks, user guides and old specs are.
 
@@ -200,18 +200,15 @@ The live verifiers in `backend/test-scripts/` run against a *running* backend an
 real database — they are how behaviour unit tests cannot reach gets proven. Start
 with `backend/test-scripts/README.md`; `npm run verify:all` runs the suite.
 
-`Documentations/DMS_E2E_Test_Guide.xlsx` is the manual end-to-end retest checklist (26 sheets, 252
-cases) covering setup, auth, the permission matrix, ACL, multi-tenancy, lifecycle,
-versioning, search, workflow/SLA, retention, signing, forms, OCR/AI, audit,
-realtime, webhooks, rate limiting, reports and bulk operations.
+A manual end-to-end retest checklist (26 sheets, 252 cases) is not included in this edition; the automated Playwright specs are in `e2e/` (see `e2e/README.md`).
 
 ---
 
 ## Deployment
 
 The live deployment is native (no Docker), behind the shared Apache reverse proxy at
-`https://portal.examplecorp.com/dms`. The platform runbook is `/DEPLOYMENT-GUIDE.md`
-at the repository root.
+`https://portal.examplecorp.com/dms`. The proxy configuration is site-specific and is not part of this repository;
+DMS's own part is in `Documentations/DEPLOY-WINDOWS-MANUAL.md`.
 
 This repo also carries a self-contained Docker Compose stack for standalone
 deployment — `docker-compose.prod.yml` + `.env.prod.example` + `deploy/` (Caddy,

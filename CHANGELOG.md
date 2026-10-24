@@ -16,7 +16,7 @@ that. Everything from this point forward gets a real entry.
 - `REFERENCE_NUMBER_PREFIX` (1-8 upper-case letters or digits, default `KG`) is the first segment of every letter and form reference number. It was spelled `KG` in three places in code. The default keeps every number issued so far unchanged; numbers already issued keep their prefix. Set in `.env.example`; read in `letters.service.ts` and `forms.service.ts`. The company-neutral SaaS edition uses `REF`.
 
 ### Added (2026-10-15: the vault-owner defect reports itself)
-- `GET /api/v1/operations/ready` lists `platform-vault-owner` under `degraded` (and `/operations/health` shows `vaultOwner`) when the platform-vault check functions are owned by the application's own non-superuser role: the state in which every insert into `user_roles` fails with `permission denied for table platform_vault_unlocked`. `scripts/fix-vault-function-owner.sql` fixes it; `deploy/uptime-monitor.ps1` alerts on it. 4 tests.
+- `GET /api/v1/operations/ready` lists `platform-vault-owner` under `degraded` (and `/operations/health` shows `vaultOwner`) when the platform-vault check functions are owned by the application's own non-superuser role: the state in which every insert into `user_roles` fails with `permission denied for table platform_vault_unlocked`. `scripts/fix-vault-function-owner.sql` fixes it; the platform's uptime monitor alerts on it. 4 tests.
 
 ### Fixed (2026-10-15: access rows outlived their documents; retention ids; test organisations; questionnaire layout)
 - **The department-data compiler dropped the first four data rows of every sheet in a workbook saved without the template's title rows.** It assumed data starts on row 6; the Marketing workbook has its header on row 1, so Mekdes Tilahun, Cherenet Zergaw, Bona Mengesha and Alemtsehay Guluma, the Annual Marketing Plan, Marketing Strategy, Marketing Action Plan and Campaign Plan, their routes (`WF-MKT-PLAN`, `-STRAT`, and the routes for the other two, which then "matched no type") and four governance rows (retention and signature of `MKT-MARBUD`, `MKT-ANMARP`, `MKT-BRAGUI`, `MKT-CORCOM`) were silently lost, and the profile looked "empty". `firstDataRow` finds the header (4 unit tests). Loaded on dev: 4 types, 4 chains, 3 people; the 4 mis-set types corrected.
@@ -35,7 +35,7 @@ that. Everything from this point forward gets a real entry.
 - **Department data intake handles three more questionnaires** (Customs Clearance and Transit, Equipment Finance, Marketing): any `.xlsx` is read; a sister company gets its own organisation unit (Equipment is `EQUIP`);
   an empty Department Profile is inferred; several managers per department; department resolved by code, name, prefix or as the named manager; written addresses checked against the company directory; sample rows
   recognised by content; retention conflicts and missing rules listed (types with no rule are held back, never created without one); workflows bound by id, workflow id or name. New `decisions.json` keys
-  (`orgUnits`, `departments`, `parents`, `retentionYears`, `people`, `accepted`) are described in `Collected-Data/README.md`. 19 unit tests.
+  (`orgUnits`, `departments`, `parents`, `retentionYears`, `people`, `accepted`) are described in the Collected-Data README. 19 unit tests.
 - `npm run db:cleanup:test-structure` gained `--department=CODE`, `--detach-members` and `--drop-sequences` for structure that is not named like a test but is known to be one (all opt-in, same refusals).
 - The 16 older verifiers (`test-scripts/verify-*`, `test-acl-*`) run on dev through `test-scripts/lib/dev-admin.ts`: the QA-world administrator, the `qa-lab` tenant, a second person to approve (self-approval is refused), a guard
   that refuses anything but the local dev backend, and a clear `NEEDS DEMO DATA` exit instead of a crash. `test-acl-batch-equivalence` no longer deletes role rules it did not insert.
@@ -45,10 +45,10 @@ that. Everything from this point forward gets a real entry.
   Distinct meanings got their own codes instead of sharing one: `ERR-OIDC-STATE-INVALID` (the sign-in `state` parameter), `ERR-BUNDLE-DUPLICATE-IDS` (422), and `ERR-LETTER-ORG-MISSING` and
   `ERR-RETENTION-CONFIG` (server-side data faults, still 500). A client that matched on the old status or code needs the new one. `tests/esigning.workflow.test.ts` pins the 409. Unused imports and
   handler parameters found on the way were removed.
-- **Department data intake is a tool** (`Collected-Data/README.md`): `npm run db:compile:collected` cleans every `REF-Corp-<Department>-<Person>.xlsx` (typos, DMS-valid codes, sub-departments, role words,
+- **Department data intake is a tool** (the Collected-Data README): `npm run db:compile:collected` cleans every `REF-Corp-<Department>-<Person>.xlsx` (typos, DMS-valid codes, sub-departments, role words,
   several record types in one cell, template text, names matched to company addresses with a confidence level) into one compiled file and one review workbook, lists what only a person can decide
   (`decisions.json` answers it; `-- --check` fails until it is empty), and never invents an e-mail address. `npm run db:seed:collected` loads it on a practice copy through the admin services.
-  `scripts/lib/collectedCleaning.ts` has 16 unit tests. Finance is the first department added this way.
+  `collectedCleaning.ts` has 16 unit tests. Finance is the first department added this way.
 - **`npm run db:cleanup:test-structure`** removes the empty "Test Root / Child / Grandchild Dept" departments, their folders and emptied scratch organisation units that old test runs left behind
   (dry run unless `--execute`; refuses if anything real refers to them; mirror and production need `I_UNDERSTAND_THIS_DELETES`).
 - Removed the duplicate npm script `data:compile-collected` (same as `db:compile:collected`).
@@ -199,7 +199,7 @@ that. Everything from this point forward gets a real entry.
   and a manual no-Docker path.
 
 ### Removed (2026-07-18 — Session 22)
-- The `/ocr` and `/archive` 501 placeholder routers (`shared/resourceRoutes.ts`)
+- The `/ocr` and `/archive` 501 placeholder routers (`resourceRoutes.ts`)
   — dead API surface; the real features live behind the outbox OCR channel and
   document status/retention routes.
 

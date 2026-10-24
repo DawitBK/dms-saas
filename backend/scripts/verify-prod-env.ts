@@ -127,5 +127,5 @@ try {
 console.log("All production guards passed.");
 console.log("");
 console.log("Note: this checks CONFIGURATION only. It does not prove Postgres, Redis or");
-console.log("clamd are reachable — those are verified by the health checks in");
-console.log("DEPLOYMENT-GUIDE.md after the service starts.");
+console.log("clamd are reachable — those are verified by the health checks described in");
+console.log("Documentations/DEPLOY-WINDOWS-MANUAL.md after the service starts.");

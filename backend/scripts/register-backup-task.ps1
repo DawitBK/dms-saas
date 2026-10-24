@@ -3,7 +3,7 @@
   Registers a Scheduled Task that runs DMS's new `npm run db:backup:prod`
   (scripts/db-backup.ts) nightly. DMS's docker-compose.prod.yml has its own
   backup sidecar, but the live production server runs DMS as a bare `node`
-  process with no Docker at all (see SERVER-INFRASTRUCTURE-AUDIT.md Section 3)  -  so
+  process with no Docker at all  -  so
   that sidecar isn't protecting the real dmsprod. This is the Windows-native
   equivalent. RUN THIS ON THE LIVE SERVER.
 #>
@@ -42,7 +42,7 @@ $trigger = New-ScheduledTaskTrigger -Daily -At $At
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings `
-  -Description "Nightly dmsprod backup via scripts/db-backup.ts. See /docs/operations/PLATFORM-OPERATIONS-GUIDE.md Section 1.1." `
+  -Description "Nightly dmsprod backup via scripts/db-backup.ts. See Documentations/DEPLOY-WINDOWS-MANUAL.md." `
   -RunLevel Highest
 
 Write-Host "Registered '$TaskName' (daily at $At). Verify with:"

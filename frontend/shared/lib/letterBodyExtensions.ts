@@ -2,7 +2,7 @@
 //
 // This file, together with LetterBodyEditor.tsx's extension list, is one
 // half of the shared document contract — the backend half is
-// DMS/backend/src/modules/letters/letterBodyDoc.ts's Zod schema. The two are
+// backend/src/modules/letters/letterBodyDoc.ts's Zod schema. The two are
 // kept in sync BY HAND (different runtimes, no shared package) — every attr
 // name here must match a field that schema actually accepts, or content an
 // author creates here will fail letters.service.ts's bodyHtml validation the

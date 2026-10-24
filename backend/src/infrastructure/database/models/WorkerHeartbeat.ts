@@ -4,7 +4,7 @@ import { sequelize } from "../sequelize.js";
 /**
  * DATA-3: cross-process worker liveness signal. The API and the BullMQ
  * worker are separate OS processes in every real deployment
- * (production-start.bat starts them as two windows specifically so a native
+ * (the production start script runs them as two windows specifically so a native
  * crash inside worker code can't take the API down with it), so an
  * in-process flag is invisible to the API process that serves
  * /operations/health. Postgres is the right channel: it's required

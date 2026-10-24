@@ -44,7 +44,7 @@ checkFingerprintOrExit(process.env.NODE_ENV === 'mirror' ? '.env.mirror' : '.env
 // infers as the workspace root, and that inference is not under our control: on
 // one machine the root came out as C:\Users\admin, which put server.js six
 // levels down, at .next/standalone/Downloads/Projects/
-// EXAMPLECORP_SYSTEMS_PRODUCTION_V3/DMS/frontend/server.js. The previous cap of 4
+// <project folder>/frontend/server.js. The previous cap of 4
 // missed it and reported "no server.js found ... Re-run `npm run build`" after a
 // build that had in fact succeeded, which sends you to debug the wrong thing.
 //

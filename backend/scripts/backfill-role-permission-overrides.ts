@@ -31,7 +31,7 @@
  */
 
 // The env loader, NOT `dotenv/config`: production must read .env.production
-// only (root CLAUDE.md, "Env files"); dotenv/config would read the dev `.env`,
+// only; dotenv/config would read the dev `.env`,
 // so `NODE_ENV=production` runs of this script would have hit the dev database.
 import "../src/config/env.js";
 import { connectDB, initModels, sequelize, UserRole } from "../src/infrastructure/database/index.js";

@@ -55,7 +55,7 @@ const SOCKET_OPTIONS = {
   // NOTE ON `path`: left at the default "/socket.io". In production DMS is
   // reached at `/dms/socket.io/` on the shared origin, but Apache REWRITES
   // that to `/socket.io/` before proxying to 7100 (see
-  // apache/conf/extra/httpd-ssl.conf), so the app never sees the prefix. The
+  // the Apache SSL vhost), so the app never sees the prefix. The
   // browser-side path is set from NEXT_PUBLIC_BASE_PATH — see SOCKET_PATH in
   // frontend/shared/lib/apiConfig.ts, which is where that went wrong.
   transports: ["websocket", "polling"] as ("websocket" | "polling")[],

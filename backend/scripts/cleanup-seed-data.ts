@@ -19,7 +19,7 @@
  * failure leaves the database exactly as it was. In mirror/production it additionally
  * demands I_UNDERSTAND_THIS_DELETES=<database name>.
  *
- * Usage (from DMS/backend; mirror/production MUST use the launcher or this targets DEV):
+ * Usage (from backend; mirror/production MUST use the launcher or this targets DEV):
  *   npx tsx scripts/cleanup-seed-data.ts                          dry run, defaults
  *   npx tsx scripts/cleanup-seed-data.ts --tenants=demo-org,fsfds --users=ellu@gmail.com
  *   npx tsx scripts/cleanup-seed-data.ts --execute
@@ -29,7 +29,7 @@
  * the tenant would remove that membership, and the database refuses to touch the platform
  * administrator without the owner's vault password (which this script never has).
  *
- * --personal-groups-file=<json> (written by SSO/backend/scripts/cleanup-seed-data.ts) names the
+ * --personal-groups-file=<json> (written by SSO's `cleanup-seed-data.ts`) names the
  * SSO personal groups of the accounts SSO removed; their role mappings live in this database
  * and are removed here too.
  *

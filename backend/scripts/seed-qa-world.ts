@@ -17,11 +17,11 @@
  *   forms       templates (department, org-unit and tenant scope) and filled instances
  *   checks      an expected-vs-actual access matrix per persona; every mismatch is printed and the run exits 1
  *
- * Passwordless: with LOCAL_JWT_MOCK=true in DMS/backend/.env, POST /auth/login {email} signs in as any persona
+ * Passwordless: with LOCAL_JWT_MOCK=true in backend/.env, POST /auth/login {email} signs in as any persona
  * (the screens' dev login page offers the same). Flip LOCAL_JWT_MOCK back to false when you are done testing.
  * Nothing here sends mail (dev SMTP is MailHog) and it never touches another tenant.
  *
- *   npm run db:seed:qa        (from DMS/backend; safe to run again — whatever exists is left alone)
+ *   npm run db:seed:qa        (from backend; safe to run again — whatever exists is left alone)
  *
  * Refuses unless NODE_ENV=development and the database is the dev one. There is no override on purpose.
  */

@@ -73,7 +73,7 @@ auditRoutes.get(
   asyncHandler(async (req, res) => {
     // Tenant-scoped like every sibling route here — unscoped, this used to
     // scan and HMAC every tenant's rows, leaking another tenant's identifier
-    // in `message` on a broken chain (Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #4) and
+    // in `message` on a broken chain (audit 2026-07-26 #4) and
     // costing a full-table scan per call to a caller who only holds
     // AUDIT_READ for their own tenant.
     const result = await verifyAuditChain(undefined, req.user!.tenantId);

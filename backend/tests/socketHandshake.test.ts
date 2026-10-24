@@ -1,4 +1,4 @@
-// F-06 follow-up (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): the realtime socket is the
+// F-06 follow-up (audit 2026-09-03): the realtime socket is the
 // PRIMARY freshness mechanism for the UI — the frontend's interval polls are
 // socket-down fallbacks — so its handshake is now on the authentication path
 // proper, not a best-effort side channel.

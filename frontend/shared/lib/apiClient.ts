@@ -280,7 +280,7 @@ export async function apiClient<T>(
  *
  * Every real download call site used to hit `fetch()` directly with a
  * snapshotted accessToken instead of going through this file's `instance`,
- * which meant two bugs at once (Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #7/#14):
+ * which meant two bugs at once (audit 2026-07-26 #7/#14):
  *   1. fetch() never rejects on a non-2xx status — an expired-token 401 or a
  *      backend 500 was blob-ified and force-downloaded as if it were the
  *      real file, with no error surfaced to the user.

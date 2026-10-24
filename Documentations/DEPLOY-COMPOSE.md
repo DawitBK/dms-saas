@@ -2,9 +2,9 @@
 
 One of three paths. Use this when you want DMS to bring its own infrastructure
 (Postgres, Redis, MinIO, Meilisearch, ClamAV, Prometheus/Grafana) on a Linux host.
-For the Example Corp platform deployment — DMS alongside GMS and SSO behind one shared
-Apache proxy — the canonical runbook is `/DEPLOYMENT-GUIDE.md` at the repository
-root. For a standalone Windows install without Docker, see `DEPLOY-WINDOWS-MANUAL.md`.
+For DMS alongside GMS and SSO behind one shared Apache proxy, DMS's own part is in
+`DEPLOY-WINDOWS-MANUAL.md`; the proxy configuration is site-specific and is not part of this
+repository. For a standalone Windows install without Docker, see `DEPLOY-WINDOWS-MANUAL.md`.
 
 The production stack is `docker-compose.prod.yml` at the repo root: Caddy
 (TLS, the only published ports) → frontend (Next standalone) + backend API,

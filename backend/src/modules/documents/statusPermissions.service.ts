@@ -119,8 +119,8 @@ export async function setStatusPermissionRoles(
     }
 
     // afterCommit, not right after the writes above — the request's ambient
-    // transaction may not actually commit until response-finish time (see
-    // DMS/CLAUDE.md's runInTransaction note); invalidating eagerly would race
+    // transaction may not actually commit until response-finish time (see the
+    // runInTransaction convention); invalidating eagerly would race
     // a rollback the same way roles.service.ts's replaceRolePermissions
     // already documents for its own cache.
     tx.afterCommit(() => {

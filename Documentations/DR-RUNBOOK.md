@@ -7,14 +7,10 @@ blobs loses records; losing the master keys loses *everything* — wrapped DEKs
 are undecryptable without them. Meilisearch and Redis are rebuildable state
 (reindex / queues drain) and are not part of DR.
 
-> **Which path applies.** This runbook describes the **Docker Compose** stack. The
-> Example Corp production server runs DMS natively (no Docker, no MinIO) and is backed
-> up by the platform's scheduled `deploy/backup-all.ps1` (dated seven-slot sets
-> `daily\<yyyy-MM-dd>\` containing the DMS dump, a full DMS file snapshot, roles and
-> the `.env.production` copies), restored with `deploy/restore-from-backup.ps1`
-> (dry run until `-Execute`; `-Rehearse` for a no-downtime drill). Use
-> `/BACKUP-RESTORE-MANUAL-PROD.md` for that server; the drill script and the checks
-> below still apply to it.
+> **Which path applies.** This runbook describes the **Docker Compose** stack. A native
+> deployment (no Docker, no MinIO) that is backed up by a platform-level scheduled backup
+> restores with that backup's own restore tool, which is not part of this repository; the
+> drill and the checks below still apply to it.
 
 ## What the prod compose already does
 
@@ -69,7 +65,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres mi
 docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T postgres \
   pg_restore -U postgres -d dms --clean --if-exists --no-owner < dms-<STAMP>.dump
   # This is the Docker stack's restore. On the NATIVE server (the live one) restore WITHOUT --no-owner and then check
-  # pg_tables.tableowner is edams_app: /BACKUP-RESTORE-MANUAL-PROD.md section 8.6.
+  # pg_tables.tableowner is edams_app.
 
 # 3. Restore blobs into the minio volume (rclone/mc from the offsite copy),
 #    then re-run the versioning one-shot:
@@ -103,20 +99,13 @@ Once before go-live and after any major storage change: on a scratch machine
 per the procedure above and run the verification block. Record date + outcome
 here:
 
-`deploy/dms-restore-drill.ps1` automates the database half of
-this — creates a disposable scratch database (refuses any name containing
+A restore-drill script (platform tooling, not part of this repository) automates the
+database half of this: it creates a disposable scratch database (refuses any name containing
 "prod" as a safety backstop), restores a given dump into it, spot-checks row
 counts on a few key tables, then drops the scratch database. It does not
 cover the MinIO blob restore or DEK-unwrap verification steps above — run
 those manually against a scratch compose stack periodically (at minimum
-quarterly) in addition to running the script. **Note this script lives in the
-platform-root repo's `deploy/` (the SSO repo, one level up from this DMS
-checkout) — not inside `DMS/deploy/`, which only has Caddy/Postgres-init/
-Prometheus config.**
-
-```powershell
-..\deploy\dms-restore-drill.ps1 -DumpPath "B:\Backups\dms\dmsprod_production_20260828.dump" -PgUser postgres
-```
+quarterly) in addition to running the script.
 
 | Date | Operator | Dump restored | Outcome |
 | --- | --- | --- | --- |

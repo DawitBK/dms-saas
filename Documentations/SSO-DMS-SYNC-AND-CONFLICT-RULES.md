@@ -16,9 +16,9 @@ comes from three things only:
    (`completeOidcCallback` in `auth.service.ts`, with the decisions in `modules/auth/ssoIdentity.ts`).
 2. **Pushes at admin time.** SSO's admin console writes into DMS through the shared-secret internal
    API (`/api/v1/internal/roles/tenants/:tenantId/...`, `modules/roles/internal.routes.ts`; client:
-   `SSO/backend/src/admin/dms-internal-client.ts`), and ends DMS sessions with a signed
-   backchannel-logout (`SSO/backend/src/auth/logout-notify.ts` to DMS `POST /auth/backchannel-logout`).
-3. **An on-demand report.** `SSO/backend/scripts/dms-drift-report.ts` (read-only) lists accounts that
+   SSO's `dms-internal-client.ts`), and ends DMS sessions with a signed
+   backchannel-logout (SSO's `logout-notify.ts` to DMS `POST /auth/backchannel-logout`).
+3. **An on-demand report.** SSO's `dms-drift-report.ts` (read-only) lists accounts that
    are off in SSO and still active in DMS.
 
 The only other loop is SSO's own `ad-resync.worker.ts`, which re-checks **AD group membership** of
@@ -46,7 +46,7 @@ except through the same revoke.
    `JWT_ACCESS_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` (code defaults 15m / 8h; this checkout's
    `.env.production` and `.env.mirror` both set 8h / 8h).
 
-### 2.2 What SSO puts in the claim (`SSO/backend/src/auth/client-role-claims.ts`)
+### 2.2 What SSO puts in the claim (SSO's `client-role-claims.ts`)
 
 `claimsFor` resolves the user's SSO groups (`idp_user_groups`, including the per-user group
 `CN=user:<id>,OU=Users,DC=examplecorp,DC=com`) through `POST .../role-mappings/resolve`. An account in no
@@ -134,7 +134,7 @@ carries a department list.
 4. **Cleaning orphan mappings** when a DMS role is deleted (R8).
 5. **Case-variant duplicate accounts** (C4) are refused, not merged; merging users moves documents and needs a decision per case.
 6. **Passwordless login.** `LOCAL_JWT_MOCK` skips SSO entirely, so SSO-side disable does not stop it. `.env.production` and
-   `.env.mirror` in this checkout set it to `false` (the root `CLAUDE.md` still says production runs with `true`, which is
+   `.env.mirror` in this checkout set it to `false` (older platform notes said production runs with `true`; that is
    superseded by the comment in `config/env.ts`); the live server's file was not read.
 
 ## 7. Audit trail of the sync

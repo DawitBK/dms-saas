@@ -73,8 +73,8 @@ const base64UrlEncode = (buf: Buffer): string =>
 const DEFAULT_TENANT_ID = 'examplecorp';
 /**
  * Custom claim namespaces, as MINTED BY SSO. The authority for both strings is
- * SSO's own source — `SSO/backend/src/config.ts` (AD_GROUPS_CLAIM) and
- * `SSO/backend/src/auth/client-role-claims.ts` (EDAMS_ROLES_CLAIM). If these
+ * SSO's own source — its `config.ts` (AD_GROUPS_CLAIM) and
+ * SSO's `client-role-claims.ts` (EDAMS_ROLES_CLAIM). If these
  * two literals do not match SSO's byte for byte, the claim silently reads as
  * `undefined` here and every code path that depends on it becomes dead — no
  * error, no log line.
@@ -86,7 +86,7 @@ const DEFAULT_TENANT_ID = 'examplecorp';
  * masked because the EDAMS_ROLES_CLAIM path (line above, which was correct)
  * always won first.
  *
- * This is the same failure mode root CLAUDE.md documents for the reverted
+ * This is the same failure mode as the reverted
  * `edams`→`dms` rename (DMS commit ca06550): the `edams` namespace is
  * load-bearing and must NOT be renamed here without a coordinated migration
  * of `idp_role_mappings` in both repos.
@@ -746,7 +746,7 @@ export async function selectTenant(
   const publicKey = Buffer.from(config.DEV_RSA_PUBLIC_KEY!, 'base64').toString(
     'utf-8',
   );
-  // Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #9: this used to pin only `algorithms`,
+  // audit 2026-07-26 #9: this used to pin only `algorithms`,
   // skipping the issuer/audience check verifyAccessToken enforces on every
   // other token this app issues, even though the pre-tenant token above is
   // minted with the same iss/aud claims.
@@ -1706,7 +1706,7 @@ export async function recordLogout(
     }
   }
 
-  // AUDIT-FINDINGS-2026-08-11 data-flow sweep #1: AUTH_LOGIN is written on
+  // audit 2026-08-11 data-flow sweep #1: AUTH_LOGIN is written on
   // every successful login but AUTH_LOGOUT was a dead constant — a
   // forensic "was this user logged in at time X" query had starts but no
   // ends.
@@ -1816,7 +1816,7 @@ export async function validateTotp(
   );
   let payload: any;
   try {
-    // Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #9: same fix as /select-tenant above —
+    // audit 2026-07-26 #9: same fix as /select-tenant above —
     // route through the shared issuer/audience-checked verify options.
     payload = jwt.verify(mfaPendingToken, publicKey, dmsJwtVerifyOptions());
   } catch {

@@ -1,5 +1,5 @@
 /**
- * Audit-chain sharding verification — R-02 of Documentations/audits/AUDIT-FINDINGS-2026-09-03.md.
+ * Audit-chain sharding verification — R-02 of audit 2026-09-03.
  *
  * writeAuditLog() takes a per-chain advisory XACT lock and reads the chain tip
  * from committed state under it. That lock is load-bearing — it is what stops a

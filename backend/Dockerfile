@@ -73,6 +73,9 @@ COPY backend/package.json ./backend/package.json
 COPY package.json ./package.json
 
 WORKDIR /repo/backend
+# The production logger writes rotating files to ./logs, and uploads are staged under ./storage; both are created at start-up, which the
+# unprivileged user cannot do here, so they exist and belong to it (a volume mounted on storage inherits that).
+RUN mkdir -p logs storage && chown node:node logs storage
 EXPOSE 7100
 USER node
 

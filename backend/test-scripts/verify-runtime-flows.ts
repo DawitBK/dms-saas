@@ -1,6 +1,6 @@
 /**
  * Live-stack runtime verification — flows 1–7 are what Sessions 19/20 could never
- * exercise because the local infra was down (HANDOFF Tier-1 item #1); flow 8
+ * exercise because the local infra was down (an earlier handoff item); flow 8
  * was added in Session 22 alongside the M8 sweep savepoint fix:
  *
  *   1. MFA single-use pending token (replay of a consumed token → 401)

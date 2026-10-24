@@ -11,7 +11,7 @@ a set of proposals) have been removed: the system they described no longer exist
 every question they raised is answered below. The [Divergences](#divergences-from-the-original-proposals)
 table records the points where a decision overrode the original proposal, stating both
 sides, so nothing is lost by their absence. For how the engine works *now*, read
-`ARCHITECTURE.md` and `DMS/CLAUDE.md`.
+`ARCHITECTURE.md`.
 
 ---
 

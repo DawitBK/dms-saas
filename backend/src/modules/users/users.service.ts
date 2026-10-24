@@ -51,7 +51,7 @@ const userListInclude = [
 ];
 
 /**
- * R-06 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): `users` has no tenant_id — membership
+ * R-06 (audit 2026-09-03): `users` has no tenant_id — membership
  * is many-to-many through `user_tenants` — and neither listUsers nor getUser
  * joined it. So GET /users returned EVERY user row in the database to any
  * user:manage holder, and GET /users/:id resolved any user id across tenant

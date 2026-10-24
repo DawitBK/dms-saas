@@ -38,9 +38,9 @@ import { useState } from 'react';
  * crash rather than the background churn the equivalent useEffect bug caused.
  * Pass a primitive where you can.
  *
- * This file is kept byte-identical to DMS/frontend/shared/hooks/
- * useResetOnChange.ts, which carries the unit tests pinning the behaviour
- * above (this frontend has no test runner). Change both together.
+ * This file is kept byte-identical in the DMS and GMS frontends (shared/hooks/
+ * useResetOnChange.ts in each); the DMS copy carries the unit tests pinning the behaviour
+ * above (the GMS frontend has no test runner). Change both together.
  */
 export function useResetOnChange(deps: readonly unknown[], reset: () => void): void {
   const [previous, setPrevious] = useState(deps);

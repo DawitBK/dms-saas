@@ -3,7 +3,7 @@
  *
  * The docker-compose.prod.yml `db-backup` sidecar only protects `dmsprod`
  * when DMS is actually deployed via Docker Compose. The live production
- * server (per SERVER-INFRASTRUCTURE-AUDIT.md) runs DMS as a bare `node`
+ * server runs DMS as a bare `node`
  * process with no Docker at all — so that sidecar is not backing up
  * anything there today. This script is the Windows-native equivalent,
  * mirroring GMS's proven `backend/scripts/db-backup.js`.
@@ -103,7 +103,7 @@ if (!dbName || !dbUser) {
 }
 
 // Mirrors GMS's script: backups live at the repo root, not backend/backups —
-// PRODUCTION_GUIDE.md's equivalent path claim for GMS was wrong for the same
+// an equivalent path claim for GMS was once wrong for the same
 // reason, so this is written to match the actual resolved path up front.
 const backupDir = path.resolve(__dirname, "..", "..", "backups");
 if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });

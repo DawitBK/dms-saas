@@ -307,7 +307,7 @@ function useDocumentActions(id: string) {
       // apiClientBlobResponse (axios) rejects on non-2xx and gets the same
       // silent-refresh-on-401 retry every other request gets — a bare fetch()
       // here neither checked res.ok's sibling condition consistently across
-      // call sites nor benefited from that retry (Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #14).
+      // call sites nor benefited from that retry (audit 2026-07-26 #14).
       const res = await apiClientBlobResponse(downloadDocumentUrl(id, { certificate: withCertificate }));
       const blob = res.data;
       const disposition = res.headers['content-disposition'] ?? '';
@@ -1114,7 +1114,7 @@ export default function DocumentDetailPage({
   // the two, so this is a header-level READ of that same cached chain, not
   // an extra request. Powers the "waiting on X · step 2/3" summary next to
   // the title and the pending-dot on the Workflow tab, so the route's
-  // current status is visible without clicking in (AUDIT-FINDINGS UX sweep).
+  // current status is visible without clicking in (audit UX sweep).
   const headerChainItemType: ApprovalItemType = (doc as any)?.formInstanceId ? 'FORM_INSTANCE' : 'DOCUMENT';
   const headerChainItemId: string = (doc as any)?.formInstanceId ?? id;
   const { data: headerChain } = useQuery({
@@ -1175,7 +1175,7 @@ export default function DocumentDetailPage({
   const [showUpload, setShowUpload] = useState(false);
   const [showAddToBundle, setShowAddToBundle] = useState(false);
   const [showVersionDiff, setShowVersionDiff] = useState(false);
-  // AUDIT-FINDINGS-2026-08-11 UI/UX sweep #3: force-unlock/discard used native
+  // audit 2026-08-11 UI/UX sweep #3: force-unlock/discard used native
   // window.prompt()/window.confirm() instead of the app's own Modal — ported
   // to the same accessible pattern used elsewhere (ApprovalChainCard.tsx).
   const [forceUnlockModalOpen, setForceUnlockModalOpen] = useState(false);

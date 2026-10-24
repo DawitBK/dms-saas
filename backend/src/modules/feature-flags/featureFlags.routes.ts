@@ -19,7 +19,7 @@ const setFlagSchema = z.object({
 // other :tenantId-parameterized route, these two never checked the URL's
 // tenantId against the caller's own JWT tenantId, so any tenant-manage holder
 // could read/flip another tenant's flags by guessing/enumerating its id
-// (Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #5).
+// (audit 2026-07-26 #5).
 function assertOwnTenant(req: { user?: { tenantId: string } }, tenantId: string) {
   if (req.user!.tenantId !== tenantId) {
     throw new AppError(403, 'ERR-CROSS-TENANT-FORBIDDEN', 'Cannot manage another tenant\'s feature flags');

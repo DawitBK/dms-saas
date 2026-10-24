@@ -61,7 +61,7 @@ const envModuleUrl = pathToFileURL(path.join(backendDir, "src", "config", "env.j
  * child's cwd, and the child's cwd is a temp directory with no node_modules,
  * so the bare form fails with ERR_MODULE_NOT_FOUND.
  *
- * DMS is an npm workspaces repo, so tsx normally hoists to DMS/node_modules;
+ * DMS is an npm workspaces repo, so tsx normally hoists to node_modules;
  * both locations are checked so a non-hoisted install still works.
  */
 const tsxLoaderUrl = (() => {

@@ -11,7 +11,7 @@
  * belonged to. Two org units with a same/similarly-named department (e.g. two
  * "Finance" departments, one per org unit) ended up as flat, indistinguishable
  * siblings with no visual grouping in the Folders admin tree — the documented
- * hierarchy is Tenant -> OrgUnit -> Department -> FolderNode (DMS/CLAUDE.md),
+ * hierarchy is Tenant -> OrgUnit -> Department -> FolderNode),
  * but the actual folder tree skipped the OrgUnit level entirely.
  *
  * getOrCreateDepartmentFolder now nests a department's folder under

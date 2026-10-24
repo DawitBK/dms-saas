@@ -1,6 +1,6 @@
 /**
  * Session-revocation durability verification — R-04 of
- * Documentations/audits/AUDIT-FINDINGS-2026-09-03.md.
+ * audit 2026-09-03.
  *
  * Revocation cutoffs used to live ONLY in Redis, which made
  * revokeAllUserSessions()'s documented contract ("if the cutoff cannot be

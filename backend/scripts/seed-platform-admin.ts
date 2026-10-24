@@ -3,7 +3,7 @@
  * PLATFORM_ADMIN role, and a tenant seat so login lands somewhere concrete.
  *
  * Run it yourself, at a terminal (it refuses without one), AFTER the SSO half
- * (SSO/backend/scripts/seed-platform-admin.ts). It asks, with echo off, for the
+ * (SSO's `seed-platform-admin.ts`). It asks, with echo off, for the
  * VAULT password, which only you know and which is never written anywhere. The
  * database refuses to create or change a platform administrator without it
  * (migration 20261004000002-platform-admin-protection.sql); this script opens the
@@ -19,7 +19,7 @@
  * DMS has no local password storage: every real login is a verified SSO id_token.
  * The account's sign-in password lives in SSO only.
  *
- * Safe to re-run. Usage (from DMS/backend); mirror/production MUST use the launcher
+ * Safe to re-run. Usage (from backend); mirror/production MUST use the launcher
  * or this silently targets the DEV database:
  *   Dev:    PLATFORM_ADMIN_EMAIL=you@example.com npx tsx scripts/seed-platform-admin.ts
  *   Mirror: PLATFORM_ADMIN_EMAIL=... node scripts/run-with-env.cjs mirror npx tsx scripts/seed-platform-admin.ts
@@ -33,7 +33,7 @@ import { config } from '../src/config/env.js';
 const DEFAULT_TENANT_ID = 'examplecorp';
 const ROLE_NAME = 'PLATFORM_ADMIN';
 
-// Same algorithm as SSO/backend/src/auth/platform-admin.ts (platformAdminPseudonym).
+// Same algorithm as SSO's `platform-admin.ts` (platformAdminPseudonym).
 // Duplicated, not shared: DMS and SSO are separate repositories.
 function pseudonym(realEmail: string, pepper: string): string {
   const mac = crypto.createHmac('sha256', pepper).update(realEmail.trim().toLowerCase()).digest('hex');

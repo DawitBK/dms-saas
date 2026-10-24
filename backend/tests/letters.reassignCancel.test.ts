@@ -1,5 +1,5 @@
 // Regression coverage for the CAMS approval-chain deadlock recovery fix
-// (UNKNOWN-UNKNOWNS-DMS.md finding #12): a step whose assignee is deactivated,
+// (unknown-unknowns audit, finding #12): a step whose assignee is deactivated,
 // or a role-step whose every holder leaves the department, must be
 // reassignable — and a letter stuck IN_REVIEW must be cancellable by an admin.
 // Fully mocked (no live DB), mirroring tests/documents.service.test.ts's style.

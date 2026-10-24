@@ -1,7 +1,7 @@
 // Real login-flow step (replaces the old SPRINT-1 dev-only demo page): shown
 // when a user holds more than one role and login/select-tenant deferred
-// which one to act as (auth.service.ts's selectRole/switchRole — see
-// DMS/CLAUDE.md's auth section). Mirrors select-tenant/page.tsx's shape.
+// which one to act as (auth.service.ts's selectRole/switchRole).
+// Mirrors select-tenant/page.tsx's shape.
 'use client';
 
 import { useRouter } from 'next/navigation';

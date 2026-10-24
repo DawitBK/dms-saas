@@ -797,7 +797,7 @@ export async function createSignatureRequest(
 }
 
 /**
- * Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #8: signing had no realtime wiring at all
+ * audit 2026-07-26 #8: signing had no realtime wiring at all
  * beyond sendSignatureRequest's own DOCUMENT.UPDATED emit (which the
  * frontend's signing pending/sent/completed lists never listen for — they're
  * keyed ['signing', ...], not ['document']). A second approver watching
@@ -1006,9 +1006,9 @@ export async function signDocument(
     throw new AppError(409, 'ERR-INVALID-STATE', 'Request is not in a signable state');
   }
 
-  // AUDIT-FINDINGS-2026-08-11 lifecycle sweep #2: legal hold blocked direct
+  // audit 2026-08-11 lifecycle sweep #2: legal hold blocked direct
   // document edits but not an in-flight signing ceremony — completion files a
-  // new signed PDF as a new document version (see PAdES note in CLAUDE.md),
+  // new signed PDF as a new document version,
   // silently defeating a hold placed after the ceremony started.
   const holdDoc = await Document.findByPk(request.documentId, { attributes: ['isOnLegalHold', 'departmentId', 'tenantId', 'latestVersionId'] });
   // Tenant isolation for the authenticated path. The signature tables carry no RLS
@@ -1331,7 +1331,7 @@ export async function signDocument(
     await emitSigningUpdated(request.documentId, signedDocTenantId, allSigned ? 'completed' : 'partially_signed', request.createdBy ? [request.createdBy] : undefined);
   }
 
-  // AUDIT-FINDINGS-2026-08-11 data-flow sweep #8: notify the SENDER, not just
+  // audit 2026-08-11 data-flow sweep #8: notify the SENDER, not just
   // a realtime event they'd miss if not watching the page — mirrors letters'
   // fanOut to the submitter on LETTER_APPROVED.
   if (allSigned && request.createdBy && signedDocTenantId) {
@@ -1626,7 +1626,7 @@ export async function declineSignature(
     await emitSigningUpdated(request.documentId, declinedDocTenantId, 'declined', request?.createdBy ? [request.createdBy] : undefined);
   }
 
-  // AUDIT-FINDINGS-2026-08-11 data-flow sweep #8: same sender-notification
+  // audit 2026-08-11 data-flow sweep #8: same sender-notification
   // gap as signDocument's completion path — a decline is the more urgent of
   // the two (the sender needs to know the ceremony died), and previously
   // got no persisted notification either.

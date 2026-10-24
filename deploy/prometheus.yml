@@ -12,7 +12,6 @@ scrape_configs:
       # Was "backend:4000" — a leftover from an earlier port scheme. The
       # `backend` service in docker-compose.prod.yml is configured for and
       # healthchecked on 7100, so the old target silently never resolved
-      # (this stack is not what runs in production today — see
-      # /docs/operations/PLATFORM-OPERATIONS-GUIDE.md §1.1 — but fixed here so a compose-based
+      # (this stack is not what runs in production today — but fixed here so a compose-based
       # deployment doesn't inherit a dead scrape target).
       - targets: ["backend:7100"]

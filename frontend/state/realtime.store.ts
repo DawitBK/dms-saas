@@ -3,7 +3,7 @@ import { create } from 'zustand';
 /**
  * Whether the realtime socket is currently connected.
  *
- * F-06 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md) asked why My Work polls when the app
+ * F-06 (audit 2026-09-03) asked why My Work polls when the app
  * already has WebSockets. It shouldn't have to — the socket pipeline
  * (RealtimeBridge + the transactional outbox behind it) already invalidates the
  * My Work queries, so the interval was redundant work on the system's hottest

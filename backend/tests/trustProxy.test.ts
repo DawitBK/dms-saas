@@ -5,7 +5,7 @@ import request from "supertest";
 // app.set('trust proxy', ...), so with Express's default of false, `req.ip`
 // was the Apache proxy's own loopback address for EVERY user in production
 // (7100 is loopback-only and Apache is the sole entry point —
-// DEPLOYMENT-GUIDE.md C5). Three things keyed off that one collapsed value:
+// pre-deploy check C5). Three things keyed off that one collapsed value:
 // the /api/v1/auth 20-req/min and /api 800-req/min IP limiters (an
 // organisation-wide budget, i.e. an outage at real concurrency),
 // audit_logs.source_ip, and the AUTHN_FAILURE audit sampler's per-source

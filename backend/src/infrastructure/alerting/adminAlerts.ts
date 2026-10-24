@@ -9,7 +9,7 @@
  * Two independent, best-effort channels (each individually optional — see
  * config/env.ts for ADMIN_ALERT_WEBHOOK_URL / ADMIN_ALERT_EMAIL_TO):
  *   - Slack, via the same kind of incoming webhook the platform's
- *     uptime-monitor.ps1 already posts to (a different URL value is fine;
+ *     uptime monitor already posts to (a different URL value is fine;
  *     pointing both at the same webhook just lands both in one channel).
  *   - Email, sent directly through the existing mailer — NOT the
  *     transactional outbox, deliberately: the outbox needs a DB transaction,
@@ -17,7 +17,7 @@
  *
  * Errors are deduped per (method + route + error name) "fingerprint" so one
  * flapping bug sends one alert per ADMIN_ALERT_THROTTLE_MS window rather than
- * one per request — the same state-change-only philosophy uptime-monitor.ps1
+ * one per request — the same state-change-only philosophy the platform's uptime monitor
  * uses for up/down transitions. The in-memory tracker still records every
  * occurrence's count regardless of whether that occurrence triggered a
  * fresh alert, so the /operations panel shows the true frequency.

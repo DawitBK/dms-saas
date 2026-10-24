@@ -51,11 +51,11 @@ if (externalNodeEnv === "production") {
         "Production configuration is read from .env.production ONLY — `.env` is the development " +
         "file and is deliberately not read in production.\n" +
         ".env.production is gitignored (it holds real secrets) so it is never part of a clone or a " +
-        "file copy: it has to be placed on this machine by hand. See MANUAL-TRANSFER-TO-SERVER.md.",
+        "file copy: it has to be placed on this machine by hand.",
     );
   }
   // override:true so this file wins over any ambient machine-wide variable —
-  // e.g. a leftover Railway/Render DATABASE_URL (root CLAUDE.md, "Known footguns").
+  // e.g. a leftover Railway/Render DATABASE_URL.
   loadDotenv({ path: productionEnvPath, override: true, quiet: true });
   // .env.production sets NODE_ENV=production itself; pin it anyway so the file
   // and the launcher can never disagree about which mode this process is in.
@@ -125,7 +125,7 @@ const envSchema = z.object({
   AUDIT_HMAC_SECRET: z.string().min(32),
   /**
    * How many independent hash chains each tenant's audit trail is split
-   * across (R-02, Documentations/audits/AUDIT-FINDINGS-2026-09-03.md).
+   * across (R-02, audit 2026-09-03).
    *
    * writeAuditLog holds a per-tenant advisory XACT lock from a request's
    * first audit write until that request's transaction commits — which is at
@@ -161,9 +161,9 @@ const envSchema = z.object({
    *  or a legitimate heavy-polling UI, while still stopping a genuinely
    *  runaway/bot client (thousands of req/min from one identity). */
   RATE_LIMIT_USER_PER_MINUTE: z.coerce.number().int().positive().default(1000),
-  // Loopback by default, per DEPLOYMENT-GUIDE.md's C5 pre-deploy check ("All 4
+  // Loopback by default, per the C5 pre-deploy check ("All 4
   // API ports loopback-only: 7100/7200/7300/7400 … Nothing on 0.0.0.0") and
-  // SERVER-INFRASTRUCTURE-AUDIT.md §2 (Apache on 80/443 is the only sanctioned
+  // the platform's stated architecture (Apache on 80/443 is the only sanctioned
   // public entry point). Was "0.0.0.0", which exposed 7100 on every interface
   // and made C5 impossible to satisfy without setting HOST by hand on the box.
   HOST: z.string().default("127.0.0.1"),
@@ -174,7 +174,7 @@ const envSchema = z.object({
    *
    * This is NOT cosmetic. Express defaults `trust proxy` to FALSE, and in
    * production every request reaches DMS through the shared Apache reverse
-   * proxy over loopback (DEPLOYMENT-GUIDE.md C5 — 7100 is loopback-only), so
+   * proxy over loopback (pre-deploy check C5 — 7100 is loopback-only), so
    * with that default `req.ip` was Apache's own address for EVERY user in the
    * organisation. Three things silently keyed off that single collapsed value:
    *
@@ -246,7 +246,7 @@ const envSchema = z.object({
   // shared Postgres instance's max_connections is 100 across GMS/DMS/SSO/MRS,
   // so this still leaves headroom (verified against live pg_stat_activity).
   /**
-   * R-01 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): this is the real ceiling on
+   * R-01 (audit 2026-09-03): this is the real ceiling on
    * concurrent authenticated requests, because `tenantContext`
    * (shared/middleware.ts) holds one pooled connection for the FULL lifetime
    * of every authenticated request — the transaction is committed only once
@@ -377,7 +377,7 @@ const envSchema = z.object({
    * That API is gated by a single static key and, on success, synthesizes a
    * SYSTEM_ADMIN principal holding every DMS permission on whatever tenant the
    * caller names. Every real caller is the SSO backend on the same host
-   * (DEPLOYMENT-GUIDE.md: DMS_API_BASE_URL=http://127.0.0.1:7100/api/v1), so
+   * (DMS_API_BASE_URL=http://127.0.0.1:7100/api/v1 in production), so
    * loopback-only costs nothing and removes the remote attack surface — including
    * the ability to brute-force the key at network speed — entirely.
    *
@@ -408,7 +408,7 @@ const envSchema = z.object({
    * `openid profile email` now returns an id_token with no roles and no groups.
    * The callback would then fall through to local user_roles and, for a
    * first-time SSO user with no rows, to ['EMPLOYEE'] — the same silent
-   * role-flattening the reverted `edams`→`dms` rename caused (root CLAUDE.md).
+   * role-flattening the reverted `edams`→`dms` rename caused.
    * Keep in step with SSO's clientSeed scope for client_id 'edams'.
    */
   OIDC_SCOPES: z.string().default('openid profile email ad_groups edams_roles'),
@@ -427,8 +427,8 @@ const envSchema = z.object({
   //
   // These were `z.string().min(1)`, i.e. mandatory for EVERY deployment. That
   // was wrong and it was a production boot-blocker: this server runs DMS
-  // natively with STORAGE_DRIVER=local and no MinIO at all (see
-  // production-start.bat), so `.env.production` correctly does not define them
+  // natively with STORAGE_DRIVER=local and no MinIO at all, so
+  // `.env.production` correctly does not define them
   // — and DMS therefore could not start from `.env.production` alone. It only
   // appeared to work on a developer machine because the dev `.env`, which
   // production no longer reads, happened to supply them.
@@ -478,8 +478,8 @@ const envSchema = z.object({
    * verified from the UI instead of taken on faith.
    *
    * ADMIN_ALERT_WEBHOOK_URL: a Slack incoming-webhook URL. Point it at the
-   * SAME webhook the platform's uptime-monitor.ps1 posts to
-   * (EXAMPLECORP_ALERT_WEBHOOK in that script) so outage alerts and
+   * SAME webhook the platform's uptime monitor posts to
+   * (its alert-webhook setting) so outage alerts and
    * application-fault alerts land in one channel instead of two.
    */
   ADMIN_ALERT_WEBHOOK_URL: optionalUrl,
@@ -491,7 +491,7 @@ const envSchema = z.object({
   ADMIN_ALERT_EMAIL_TO: optionalString,
   // Dedupe window per (route + error type) fingerprint, so one flapping bug
   // sends one alert per window instead of one per request — the same
-  // state-change-only philosophy uptime-monitor.ps1 already uses for
+  // state-change-only philosophy the platform's uptime monitor already uses for
   // up/down transitions. The in-app panel still shows every occurrence's
   // count regardless of throttling.
   ADMIN_ALERT_THROTTLE_MS: z.coerce.number().int().positive().default(600_000),
@@ -553,8 +553,8 @@ const envSchema = z.object({
   // SSO JWKS as before. Kept as the raw string: parsed (and a bad value reported) in modules/license/license.service.ts.
   LICENSE_TRUST_PUBLIC_KEYS: optionalString,
   // Incident containment: while this FILE exists every state-changing request answers 403 INCIDENT_READ_ONLY (sign-in, health and the licence routes
-  // excepted; modules/license/incidentGate.ts). Unset = off (development). The release tooling sets it to <data-dir>/incident.lock; the owner clears it
-  // from a terminal with deploy/tamper/tamper.cjs, never through the web.
+  // excepted; modules/license/incidentGate.ts). Unset = off (development). A deployment that uses incident containment points it at <data-dir>/incident.lock; the owner clears it
+  // from a terminal, never through the web.
   INCIDENT_LOCK_FILE: optionalString,
   // Owner-only operations (today: creating a tenant) need a single-use owner TICKET issued by SSO for that operation
   // (modules/auth/ownerAuthorisation.ts). Default true when NODE_ENV is production or mirror, false otherwise

@@ -90,7 +90,7 @@ const navGroups: NavGroup[] = [
     name: 'Documents',
     items: [
       {
-        // AUDIT-FINDINGS-2026-08-11 UI/UX sweep #1: the home page is gated on
+        // audit 2026-08-11 UI/UX sweep #1: the home page is gated on
         // NOTIFICATION_READ, which every role holds (including SYSTEM_ADMIN's
         // full grant), not on DOCUMENT_READ — a custom role without document
         // access still needs a link back to /dashboard. (EXECUTIVE used to be
@@ -613,7 +613,7 @@ export function Sidebar() {
   // page itself renders (approvals + audits + signatures + letters), so this
   // number and that page's list are always in sync.
   //
-  // F-06 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): the comment here used to claim this
+  // F-06 (audit 2026-09-03): the comment here used to claim this
   // was "realtime-invalidated the same way" as the notification count. It was
   // not. TanStack invalidation is prefix matching over key ARRAY ELEMENTS, and
   // RealtimeBridge invalidated ["my-work"], which does not match this query's

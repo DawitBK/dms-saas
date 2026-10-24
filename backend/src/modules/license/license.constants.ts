@@ -15,7 +15,7 @@ export const LICENSE_TOKEN_AUDIENCE = `license:${LICENSE_SYSTEM}`;
 
 /**
  * The ONE place the SSO route is written down: `GET {LICENSE_SSO_URL}<this>`. SSO's backend serves its API
- * under `/api/v1` on its own port (SSO/backend/src/main.ts mounts apiV1Router there); the licence routes are
+ * under `/api/v1` on its own port (SSO's `main.ts` mounts apiV1Router there); the licence routes are
  * `GET /licenses/public/:system` (unauthenticated) under it (contract section 5). Change it here only.
  */
 export const LICENSE_SSO_PUBLIC_PATH = `/api/v1/licenses/public/${LICENSE_SYSTEM}`;

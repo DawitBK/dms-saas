@@ -1,4 +1,4 @@
-// TEN-2 (Documentations/audits/AUDIT-FINDINGS-2026-09-18.md): rate limiting used to be IP-scoped
+// TEN-2 (audit 2026-09-18): rate limiting used to be IP-scoped
 // only, so tenants sharing a corporate NAT egress shared one bucket.
 import jwt from "jsonwebtoken";
 import { tenantAwareKeyGenerator } from "../src/shared/rateLimitKey.js";

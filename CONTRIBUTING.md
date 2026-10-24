@@ -18,7 +18,7 @@ repos should not have to relearn how branches, commits, or PRs work in each one.
 - Follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>: <summary>`,
   e.g. `fix: wrap folder mutation routes in the shared {data} envelope`.
 - Explain *why* in the body when the reason isn't obvious from the diff.
-- Reference the relevant `SSO/docs/platform/DEFECT_AND_GAP_REGISTER.md` entry (e.g.
+- Reference the relevant platform gap-register entry (kept in the SSO edition; e.g.
   `PLATFORM-GAP-006`) when a commit closes or touches one.
 
 ## Before opening a PR
@@ -71,11 +71,9 @@ structural change unless the PR description says so explicitly and why.
 - `ARCHITECTURE.md` — the architecture reference; `Documentations/DMS-MASTER_DOC.md` is the deep-dive.
 - `SYSTEM-DECISIONS.md` — authoritative for the approval engine (decisions D1–D14,
   cited by number from `modules/approvals/` and six database models).
-- `Documentations/audits/AUDIT-FINDINGS-2026-07-26.md` and `Documentations/audits/AUDIT-FINDINGS-2026-09-03.md` — closed audit
-  registers, kept because source comments cite their findings by number.
+- The 2026-07-26 and 2026-09-03 audits are closed; their reports are not part of this edition, and source comments cite their
+  findings by date and number.
 - `CHANGELOG.md` — what shipped, in Keep-a-Changelog format. `Documentations/rollout.md` — how to
   ship it without breaking live users.
 - `Documentations/` — BRD/FRD/TDD/implementation-plan/governance specs and the
   deployment runbooks.
-- `CLAUDE.md` (this repo, and the platform root) — durable, cross-session working
-  context.

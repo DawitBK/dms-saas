@@ -75,7 +75,7 @@ async function assertRlsIsEnforced(): Promise<void> {
       `RLS guard: the application connects as "${role.role_name}", which has ` +
       `${role.rolsuper ? 'SUPERUSER' : ''}${role.rolsuper && role.rolbypassrls ? ' and ' : ''}${role.rolbypassrls ? 'BYPASSRLS' : ''}. ` +
       'Row-level security does not apply to it, so every tenant-isolation policy in the migrations is inert and tenants can read each ' +
-      "other's documents. Grant the application a NOSUPERUSER NOBYPASSRLS role (see DEPLOYMENT-GUIDE.md's edams_app) and restart.",
+      "other's documents. Grant the application a NOSUPERUSER NOBYPASSRLS role (the edams_app role) and restart.",
     );
   }
 

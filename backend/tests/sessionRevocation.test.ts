@@ -1,4 +1,4 @@
-// R-04 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): session-revocation cutoffs used to live
+// R-04 (audit 2026-09-03): session-revocation cutoffs used to live
 // only in Redis. That made revokeAllUserSessions()'s documented contract — "if
 // the cutoff cannot be persisted, the revocation is a lie, so we throw" —
 // impossible to honour, because three call sites had to swallow its failure

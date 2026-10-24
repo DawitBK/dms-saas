@@ -1,4 +1,4 @@
-// TEST-1 (Documentations/audits/AUDIT-FINDINGS-2026-09-18.md): modules/retention/ had zero test
+// TEST-1 (audit 2026-09-18): modules/retention/ had zero test
 // coverage of any kind, automated or manual — this is the ONE place
 // disposalEligibleDate is computed (retentionEngine.ts's own header comment),
 // so a broken applyRetention() silently misfires every disposal warning and

@@ -72,7 +72,7 @@ export async function moveToTrash(documentId: string, user: CurrentUser) {
   // avoid. Fixed the same way: compute the new key and update the DB row
   // now (rollback-safe, part of the same transaction), and defer the actual
   // storage move to `tx.afterCommit()` — per this project's own convention
-  // (see DMS/CLAUDE.md's `runInTransaction` note) — so it only ever runs
+  // (the `runInTransaction` convention) — so it only ever runs
   // once the trash is genuinely, permanently committed.
   const versionMoves = versions.map((version: any) => ({
     version,
@@ -162,7 +162,7 @@ export async function moveToTrash(documentId: string, user: CurrentUser) {
     await chain.update({ status: "CANCELLED", completedAt: new Date() });
   }
   await AuditStageReview.destroy({ where: { ...itemFilter, status: "PENDING" } });
-  // AUDIT-FINDINGS-2026-08-11 lifecycle sweep #7: this cascade cancels chains
+  // audit 2026-08-11 lifecycle sweep #7: this cascade cancels chains
   // and voids signature requests but never told an open viewer — a second
   // approver/signer with the page open saw no update until a remount or the
   // 30s staleTime lapsed. Only fired when something was actually live.

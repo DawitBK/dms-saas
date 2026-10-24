@@ -1,9 +1,9 @@
 /**
- * The incident lock: read-only containment shared with SSO and GMS (SSO: SSO/backend/src/ops/incidentLock.ts; keep the three in step).
+ * The incident lock: read-only containment shared with SSO and GMS (SSO: SSO's `incidentLock.ts`; keep the three in step).
  *
  * A lock is a FILE whose path is INCIDENT_LOCK_FILE. While it exists, every state-changing request is answered 403 INCIDENT_READ_ONLY except sign-in and
  * sign-out, health and the licence routes (the same allowlists the licence's read-only state uses); reads keep working. Unset path = off. The file holds a
- * small JSON object { at, reason, kind } and NO secret. It is a file so the out-of-process watcher (deploy/tamper/tamper.cjs) can create it while every
+ * small JSON object { at, reason, kind } and NO secret. It is a file so the out-of-process watcher (not part of this edition) can create it while every
  * application is down, and the owner removes it from a terminal, never through the web.
  *
  * The stat result is cached for ~3 s. A path that cannot be inspected for any reason except "does not exist" counts as NOT locked (fail open).

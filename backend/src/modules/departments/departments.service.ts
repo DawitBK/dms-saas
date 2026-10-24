@@ -270,7 +270,7 @@ export async function createDepartment(input: unknown, requesterId: string, tena
       if (!parent.isActive) {
         throw new AppError(409, "ERR-DEPT-PARENT-INACTIVE", "Parent department is inactive");
       }
-      // Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #6: the ltree parent/path/level tree and
+      // audit 2026-07-26 #6: the ltree parent/path/level tree and
       // the required org_unit_id FK are two independent mechanisms nothing
       // previously cross-checked — a department could nest under a parent
       // from a DIFFERENT org unit while keeping its own org_unit_id, so
@@ -358,7 +358,7 @@ export async function updateDepartment(id: string, input: unknown, requesterId: 
   if (data.orgUnitId) {
     await getOrgUnitOrThrow(data.orgUnitId, tenantId);
     // Same dual-hierarchy invariant as createDepartment/moveDepartment
-    // (Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #6): re-pointing orgUnitId here would
+    // (audit 2026-07-26 #6): re-pointing orgUnitId here would
     // otherwise be an equally valid way to desync it from the ltree parent.
     if (dept.parentId) {
       const parent = await getDepartmentOrThrow(dept.parentId, tenantId);
@@ -433,7 +433,7 @@ export async function moveDepartment(id: string, input: unknown, requesterId: st
       if (!parent.isActive) {
         throw new AppError(409, "ERR-DEPT-PARENT-INACTIVE", "Parent department is inactive");
       }
-      // Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #6: same invariant as createDepartment —
+      // audit 2026-07-26 #6: same invariant as createDepartment —
       // reparenting must not move a department (and, transitively, its
       // descendants, which all share its org_unit_id under this invariant)
       // under a destination belonging to a different organizational unit.

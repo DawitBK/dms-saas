@@ -108,7 +108,7 @@ export function ApprovalChainCard(props: {
   const [auditModal, setAuditModal] = useState<{ reviewId: string; decision: 'PASS' | 'FLAG' } | null>(null);
   const [findings, setFindings] = useState('');
   const [resubmitAuditorId, setResubmitAuditorId] = useState('');
-  // AUDIT-FINDINGS-2026-08-11 UI/UX sweep #3: "reassign a stuck step" and
+  // audit 2026-08-11 UI/UX sweep #3: "reassign a stuck step" and
   // "admin-cancel a chain" used native window.prompt()/window.confirm() —
   // unstyled, non-ARIA, outside the design system — while the functionally
   // identical letters recovery flow (letters/[id]/page.tsx) already uses a

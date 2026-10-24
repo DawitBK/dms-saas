@@ -30,7 +30,7 @@ import {
 // running, indefinitely, with nothing beyond a log line anyone would ever
 // see.
 //
-// The signal has to be cross-process: production-start.bat runs the API and
+// The signal has to be cross-process: the production start script runs the API and
 // the worker as two SEPARATE OS processes on purpose (so a native worker
 // crash can't take the API down with it — its own 2026-08-28 comment), and
 // `/operations/health` is served BY the API process. An in-process flag here
@@ -47,7 +47,7 @@ async function touchWorkerHeartbeat(status: "ok" | "error", reason?: string): Pr
   try {
     // Defensive: main.ts (unused by any real deployment today — both
     // .env/.env.production set ENABLE_QUEUE_WORKERS=false, matching
-    // production-start.bat's two-process split) calls startWorkers() BEFORE
+    // the production start script's two-process split) calls startWorkers() BEFORE
     // initModels()/connectDB(), the same ordering hazard OCRWorker.ts already
     // documents. bin/worker.ts (the real entrypoint) calls them first, so
     // this succeeds there; failing here must never block worker startup.

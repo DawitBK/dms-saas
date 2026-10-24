@@ -52,7 +52,7 @@ anyone.
 
 ## 3. What actually happens when a file is uploaded (encryption)
 
-Code: `DMS/backend/src/modules/documents/documentCrypto.ts`, function
+Code: `backend/src/modules/documents/documentCrypto.ts`, function
 `encryptAndStore`.
 
 1. A brand new random room key (DEK) is generated — 32 random bytes, unique
@@ -96,7 +96,7 @@ Code: same file, function `fetchAndDecrypt` (called from
 | The scrambled file | `backend/storage/dms-documents/{storageKey}.enc` on the server's disk (or MinIO, if that's reachable — falls back to local disk otherwise) | `storageKey` looks like `FIN/CONTRACT/{documentId}/{versionId}/filename.pdf` |
 | That file's row saying where it is | `document_versions` table, columns `storage_key`, `original_filename`, `sha256_hash`, `plaintext_sha256` | One row per version — a document with 3 versions has 3 of these |
 | That version's locked room key | `document_deks` table, columns `encrypted_dek` (the locked key, as text), `kek_id` (which master key locked it, e.g. `"env:v1:master"`) | One row per **version**, not per document — matters if you ever look something up by document instead of version |
-| The master key(s) | `DMS/backend/.env.production` (or `DMS/.env.prod` if running the Docker path instead), as `VAULT_MASTER_KEY` (version 1) and optionally `VAULT_MASTER_KEY_V2`, `_V3`, etc. if ever rotated | **The one piece with no other copy anywhere.** Not in the database, not in git. |
+| The master key(s) | `backend/.env.production` (or `.env.prod` if running the Docker path instead), as `VAULT_MASTER_KEY` (version 1) and optionally `VAULT_MASTER_KEY_V2`, `_V3`, etc. if ever rotated | **The one piece with no other copy anywhere.** Not in the database, not in git. |
 
 Two config files exist in this repo for DMS — `backend/.env.production` (the
 plain "just run Node directly" path this platform actually uses) and root
@@ -128,12 +128,12 @@ else.
 ## 7. How to manually decrypt one file (for recovery, spot-checks, audits)
 
 A ready-to-run script already exists in this repo for exactly this:
-`DMS/backend/scripts/dr-decrypt-version.ts`. It reuses the app's own tested
+`backend/scripts/dr-decrypt-version.ts`. It reuses the app's own tested
 decrypt code rather than re-implementing the crypto by hand, so it keeps
 working correctly even after a key rotation.
 
 ```powershell
-Set-Location DMS\backend
+Set-Location backend
 node scripts/run-with-env.cjs production tsx scripts/dr-decrypt-version.ts <versionId> C:\recovered\myfile.pdf
 ```
 
@@ -155,9 +155,9 @@ reachable.
 You need all three pieces backed up, **and kept in sync with each other**:
 
 1. **The database** (`dmsprod`) — holds `document_versions` + `document_deks`.
-   The daily 18:00 set (`deploy/backup-all.ps1`, `/BACKUP-RESTORE-MANUAL-PROD.md` §12) dumps it as `postgres`.
-2. **The storage folder** — holds the `.enc` files. Each dated set carries a FULL snapshot of it (seven sets are kept,
-   `/BACKUP-RESTORE-MANUAL-PROD.md` §12); the owner copies the backup folder off the server by hand.
+   The platform's daily scheduled backup set, where one is installed, dumps it as `postgres`.
+2. **The storage folder** — holds the `.enc` files. Each dated set of that backup carries a FULL snapshot of it (seven sets are kept);
+   the owner copies the backup folder off the server by hand.
 3. **The master key** — back this up completely separately from #1 and #2.
    If you ever rotate it (§9 below), make sure your backed-up copy always
    reflects **every version that's ever existed**, not just the newest one —
@@ -187,7 +187,7 @@ follow the numbered-version process below, which is exactly what it's for.
 
 **Step 1 — add the new key as a new numbered version, don't replace the old one.**
 
-In `DMS\backend\.env.production` (or `.env.prod` for the Docker path — see
+In `backend\.env.production` (or `.env.prod` for the Docker path — see
 the note on which is which in §5), keep the existing line exactly as-is and
 add a new one:
 ```
@@ -227,10 +227,10 @@ This is the part that actually finishes the rotation — it goes through
 every old `document_deks` row, unlocks each room key with the *old* master
 key, and re-locks it with the *new* one, so eventually nothing depends on
 the old key anymore. There's a real script for this already,
-`DMS/backend/scripts/rewrap-deks.ts`. Always dry-run first:
+`backend/scripts/rewrap-deks.ts`. Always dry-run first:
 
 ```powershell
-Set-Location DMS\backend
+Set-Location backend
 node scripts/run-with-env.cjs production tsx scripts/rewrap-deks.ts
 ```
 This only *reports* how many rows still need migrating — it changes
@@ -254,7 +254,7 @@ Re-run the dry-run command from Step 4 — it should now print
 
 `rewrap-deks.ts` only touches the `document_deks` database table. DMS also
 has one other file encrypted the exact same way, sitting outside that table
-entirely: `storage/.ca-keypair.json` — the private key for DMS's own
+entirely: `.ca-keypair.json` — the private key for DMS's own
 internal signing authority (every user's e-signature certificate is issued
 from this one CA). It's easy to forget because nothing points you at it.
 **If this file is ever left un-rewrapped and an old key version is later
@@ -298,7 +298,7 @@ only after you're certain no backup you'd ever restore still references it.
 - **Don't run `rewrap-deks.ts --execute` without a dry run first** — the
   dry run costs nothing and tells you exactly how many rows are affected
   before you commit to anything.
-- **Don't forget `storage/.ca-keypair.json` during a rotation.** It's not in
+- **Don't forget `.ca-keypair.json` during a rotation.** It's not in
   the `document_deks` table, `rewrap-deks.ts` never touches it, and losing
   access to it fails *silently* — no error, just a quietly-generated
   replacement CA and every past signature permanently unverifiable from that

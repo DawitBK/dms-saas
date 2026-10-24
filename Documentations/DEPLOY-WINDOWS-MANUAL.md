@@ -1,12 +1,10 @@
 # DMS Deployment — Windows Server, no Docker
 
-**Read this only if you are deploying DMS on its own.** On the Example Corp platform
-DMS is deployed alongside GMS and SSO behind one shared Apache reverse proxy, and
-the canonical runbook for that is **`/DEPLOYMENT-GUIDE.md` at the repository root** —
-it covers the proxy configuration, the path prefixes, and the ordering between the
-three systems, none of which this document knows about. This file is the
-DMS-standalone version: everything DMS itself needs, and nothing about its
-neighbours.
+**This page covers DMS itself.** When DMS is deployed alongside GMS and SSO behind one
+shared Apache reverse proxy, the proxy configuration, the path prefixes and the ordering
+between the three systems are site-specific and are not covered here or anywhere in this
+repository. This file is the DMS-standalone version: everything DMS itself needs, and
+nothing about its neighbours.
 
 The other two supported paths are `DEPLOY-COMPOSE.md` (Docker Compose, which brings
 its own Postgres/Redis/MinIO/Meilisearch/ClamAV) and, for recovery,
@@ -202,8 +200,7 @@ Check it is up with the readiness endpoint, which needs no sign-in:
 `503` naming the failing component (`db`, `redis` or `workers`; an unreachable
 antivirus scanner is only listed under `degraded`). The detailed
 `/api/v1/operations/health` always answers 200 and is for the Operations screen, so
-an uptime monitor must use `/ready` (the platform's `deploy/uptime-monitor.ps1`
-does).
+an uptime monitor must use `/ready`.
 
 Closing a console window stops that process. To survive a reboot, wrap the same
 commands in Windows Task Scheduler ("run at startup") or NSSM. That is an optional
@@ -252,11 +249,10 @@ from exactly one failure mode, and not the common one.
 **Back up `VAULT_MASTER_KEY` separately from the data.** Both the database dump and
 the document blobs are undecryptable without it.
 
-On the Example Corp server this task is **not** registered: the platform's single
-scheduled backup is `deploy/backup-all.ps1` at the repository root (18:00 daily and
-after boot, dated seven-slot sets `daily\<yyyy-MM-dd>\`, restored with
-`deploy/restore-from-backup.ps1`). Do not run `register-backup-task.ps1` there; it
-brings back the old 02:00 task. See `/BACKUP-RESTORE-MANUAL-PROD.md`.
+Where a platform-level scheduled backup already covers DMS (one task that dumps every
+system, with its own restore tool; neither is part of this repository), this task is
+**not** registered: do not run `register-backup-task.ps1` there, because it would add a
+second, competing 02:00 backup task.
 
 `DR-RUNBOOK.md` has the restore drill. The restore procedure does not depend on how
 the app was deployed.

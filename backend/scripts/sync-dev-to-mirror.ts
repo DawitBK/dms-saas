@@ -253,9 +253,9 @@ async function syncRoleLinked(
 async function main() {
   const fromFile = parseArg("from", ".env");
   const toFile = parseArg("to", ".env.mirror");
-  // Default assumes this script runs from DMS/backend (its npm script's cwd)
+  // Default assumes this script runs from backend (its npm script's cwd)
   // with SSO checked out as a sibling repo — the standing layout of this
-  // working copy (see root CLAUDE.md).
+  // working copy.
   const ssoMirrorFile = parseArg("sso-mirror-env", "../../SSO/backend/.env.mirror");
 
   const from = loadDbConfig(fromFile);

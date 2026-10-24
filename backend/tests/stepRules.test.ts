@@ -1,4 +1,4 @@
-// R-08 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): the approval-step assignment and
+// R-08 (audit 2026-09-03): the approval-step assignment and
 // decision rules used to exist twice — once in letters.service.ts and once in
 // approvals.service.ts, where the copy was literally labelled "Mirror of
 // letters' assertStepIsActionable". They had drifted. These tests pin the

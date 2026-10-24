@@ -5,7 +5,7 @@ import { sequelize } from "../sequelize.js";
  * Durable session-revocation cutoff: every access/refresh token for this user
  * whose `iat` is at or before `cutoffAt` is dead.
  *
- * R-04 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md). This used to live only in Redis, which
+ * R-04 (audit 2026-09-03). This used to live only in Redis, which
  * made revocation both losable (a flush or eviction silently un-revoked
  * everyone) and non-transactional — the permission change that prompted the
  * revocation committed first, so three call sites had to swallow revocation

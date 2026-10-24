@@ -28,7 +28,7 @@ return {count, ttl}
 `;
 
 /**
- * R-03 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): a fixed-window counter kept in this
+ * R-03 (audit 2026-09-03): a fixed-window counter kept in this
  * process, used ONLY while Redis is unreachable.
  *
  * The store used to fail fully open on a Redis error — every request looked

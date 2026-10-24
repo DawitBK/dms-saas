@@ -11,7 +11,7 @@ import { sequelize } from "../infrastructure/database/index.js";
 /**
  * Gate for the small internal admin API the IdP's admin console calls to
  * manage DMS role permissions and per-user permission overrides on an
- * admin's behalf (SSO/backend/src/admin/dms-internal-client.ts). The IdP has no DMS user
+ * admin's behalf (SSO's `dms-internal-client.ts`). The IdP has no DMS user
  * session to act under, so it authenticates with a shared secret instead of a
  * JWT, and this middleware synthesizes a `req.user` holding every permission
  * — the IdP admin console is itself gated behind its own admin-group check,

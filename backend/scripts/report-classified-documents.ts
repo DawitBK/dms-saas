@@ -9,7 +9,7 @@
  *
  * It changes nothing: no row is written. Letter-backed documents are listed separately (they were already participants-only).
  *
- * Usage (from DMS/backend):
+ * Usage (from backend):
  *   npx tsx scripts/report-classified-documents.ts                      # dev, summary per tenant and per department
  *   npx tsx scripts/report-classified-documents.ts --list               # one line per document
  *   npx tsx scripts/report-classified-documents.ts --csv=C:\path\out.csv

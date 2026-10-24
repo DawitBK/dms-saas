@@ -9,7 +9,7 @@
  *   grace         expires            <= now <  expires + graceDays -> banner only, full function
  *   expired       now >= expires + graceDays                       -> READ-ONLY
  *
- * Kept in step with SSO's `SSO/backend/src/licenses/state.ts` (the contract's reference copy; GMS and DMS copy it). Every
+ * Kept in step with SSO's licence `state.ts` (the contract's reference copy; GMS and DMS copy it). Every
  * boundary is inclusive on its lower edge: at the exact instant of `expires - warnDays` the state is
  * already `expiring`, at `expires` already `grace`, at `expires + graceDays` already `expired`.
  */

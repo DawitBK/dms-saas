@@ -68,7 +68,7 @@ playwright-report/
 backups/
 
 # Next 16 scaffolding: generated in the app dir on every `next dev`, and the
-# CLAUDE.md is only "@AGENTS.md". Not repo docs — DMS/CLAUDE.md stays tracked.
+# The generated notes file next to AGENTS.md only contains "@AGENTS.md". Not repo docs.
 /frontend/AGENTS.md
 /frontend/CLAUDE.md
 e2e/qa-shots/

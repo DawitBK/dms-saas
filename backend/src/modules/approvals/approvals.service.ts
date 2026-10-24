@@ -784,7 +784,7 @@ export async function getSubmitPrefill(itemType: ApprovalItemType, itemId: strin
 // ─── Submit (D1) ──────────────────────────────────────────────────────────────
 
 /**
- * Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #8: approvals never called
+ * audit 2026-07-26 #8: approvals never called
  * enqueueWebsocketEvent/emitDomainEvent at all — the frontend's
  * EVENT_TYPE_TO_QUERY_KEYS map (RealtimeBridge.tsx) has no entry for
  * ['approval-chain', ...] query keys either, so a second approver or the
@@ -1050,7 +1050,7 @@ export async function decideStep(chainId: string, stepId: string, input: unknown
     );
   }
 
-  // AUDIT-FINDINGS-2026-08-11 lifecycle sweep #2: legal hold blocked direct
+  // audit 2026-08-11 lifecycle sweep #2: legal hold blocked direct
   // edits (checkout, version upload, rollback, archive, publish, delete —
   // all via requireLegalHoldClear) but not approval-chain progression, so a
   // document could be placed on hold mid-review and still approve/decline

@@ -88,7 +88,7 @@ const source = process.env.STORAGE_LOCAL_PATH
   ? path.resolve(process.env.STORAGE_LOCAL_PATH)
   : path.resolve(__dirname, '..', 'storage', 'dms-documents');
 
-// BACKUP_STORAGE_DEST is an explicit per-run override set by deploy/backup-all.ps1.
+// BACKUP_STORAGE_DEST is an explicit per-run override set by the platform backup script.
 // It exists because BACKUP_STORAGE_PATH cannot be overridden from outside: the
 // loadDotenv(override:true) above makes .env.production win over the caller's
 // environment, which sent the scheduled backup's files to the env file's folder

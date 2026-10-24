@@ -1,4 +1,4 @@
-// F-06 follow-up (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): DMS realtime was completely
+// F-06 follow-up (audit 2026-09-03): DMS realtime was completely
 // dead in production, silently, and the fallback poll was the only thing
 // keeping any view fresh. Nothing in dev could show it — on localhost:7101 DMS
 // owns the origin and nothing else answers on it.

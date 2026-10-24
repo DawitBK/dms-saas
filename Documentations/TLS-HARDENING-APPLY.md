@@ -1,7 +1,7 @@
 # Production Apache TLS hardening — operator runbook
 
-This repository now contains the hardened baseline in
-`../apache/conf/extra/httpd-ssl.conf`: TLS 1.0/1.1 and weak cipher families are
+The hardened baseline for the shared Apache SSL configuration (`httpd-ssl.conf`, which is
+not part of this repository) is: TLS 1.0/1.1 and weak cipher families are
 disabled, HSTS and edge security headers are enabled, and Apache no longer
 advertises its version. This file is the activation checklist for the Windows
 server; it cannot be completed safely from a development checkout.
@@ -18,8 +18,8 @@ server; it cannot be completed safely from a development checkout.
    the CA, `SSLCertificateChainFile` to the real certificate paths. The
    checked-in XAMPP `server.crt` is self-signed and is not an acceptable
    production identity.
-4. Copy the reviewed TLS directives from this repository to the server's live
-   `apache/conf/extra/httpd-ssl.conf`. Preserve the existing reverse-proxy
+4. Apply the reviewed TLS directives to the server's live
+   `httpd-ssl.conf`. Preserve the existing reverse-proxy
    routing rules.
 5. From an elevated PowerShell prompt on the server, test before reload:
 

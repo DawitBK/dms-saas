@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15-alpine
-    # R-01 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): max_connections raised above the
+    # R-01 (audit 2026-09-03): max_connections raised above the
     # image default of 100. tenantContext holds one connection for the full
     # lifetime of every authenticated request, so DB_POOL_MAX (now 60) is a
     # hard cap on concurrent authenticated requests — and the API process and

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 /**
- * Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #16: shared/components/Modal.tsx provides
+ * audit 2026-07-26 #16: shared/components/Modal.tsx provides
  * Escape-to-close and scroll lock (plus role="dialog"/aria-modal, applied at
  * the call site) but the newest feature area's hand-rolled modals
  * (ApprovalChainCard, FillFormModal, TemplateBuilderModal) skip it entirely —

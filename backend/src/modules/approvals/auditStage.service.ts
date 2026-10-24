@@ -29,7 +29,7 @@ import { requireLegalHoldClear, type GuardDocument } from "../../shared/document
 import { MY_WORK_QUEUE_CAP, grantChainParticipantAcl, type CurrentUser } from "./approvals.service.js";
 
 /** Same realtime gap as approvals.service.ts's emitApprovalChainUpdated
- *  (Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #8) — the audit stage is a distinct decision
+ *  (audit 2026-07-26 #8) — the audit stage is a distinct decision
  *  point (PASS/FLAG) reachable after approval completes, and had no realtime
  *  wiring of its own either. */
 async function emitApprovalChainUpdated(
@@ -79,7 +79,7 @@ export async function decideAuditReview(reviewId: string, input: unknown, user: 
   const guardDoc = await Document.findByPk(review.itemId, { attributes: ["id", "deletedAt", "status", "departmentId", "isOnLegalHold"] });
   if (!guardDoc || guardDoc.deletedAt || guardDoc.status === "TRASHED")
     throw new AppError(409, "ERR-DOCUMENT-TRASHED", "The item is no longer available for audit");
-  // AUDIT-FINDINGS-2026-08-11 lifecycle sweep #2: same as approvals.service.ts's
+  // audit 2026-08-11 lifecycle sweep #2: same as approvals.service.ts's
   // decideStep — a PASS here is a document's terminal clearance stage (goes
   // ACTIVE immediately), which must not be reachable while the item is frozen
   // for litigation/records purposes.

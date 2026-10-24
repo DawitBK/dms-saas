@@ -17,7 +17,7 @@
  * Exit codes: 2 = refused (not a local dev target), 3 = needs data or sign-in this database does not have, 1 = a check failed.
  *
  * Sign-in is the dev passwordless `POST /auth/login {email}` (needs LOCAL_JWT_MOCK=true in the dev env file, which
- * DMS/CLAUDE.md says to switch back afterwards). DMS has no password login (production is SSO only), so there is no
+ * should be switched back afterwards). DMS has no password login (production is SSO only), so there is no
  * password variable and no account is created here.
  *
  * Safety: every entry point calls `assertLocalDevTarget()`, which refuses (exit 2) when NODE_ENV is production or
@@ -129,7 +129,7 @@ export async function loginAs(requested: string, script = 'this script'): Promis
     const resp = (e as { response?: { status?: number; data?: { error?: { code?: string }; code?: string } } }).response;
     const code = resp?.data?.error?.code ?? resp?.data?.code ?? '';
     if (code === 'ERR-MOCK-DISABLED') {
-      console.error('Cannot sign in: LOCAL_JWT_MOCK is not enabled on the dev backend (set it in DMS/backend/.env.development, restart, and switch it back afterwards).');
+      console.error('Cannot sign in: LOCAL_JWT_MOCK is not enabled on the dev backend (set it in backend/.env.development, restart, and switch it back afterwards).');
       process.exit(3);
     }
     if (resp?.status === 401) needsDemoData(script, `no active account "${email}" on this database (set VERIFY_ADMIN_EMAIL to an administrator that exists)`);

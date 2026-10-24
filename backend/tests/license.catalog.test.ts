@@ -3,8 +3,8 @@
  * (docs/operations/PLATFORM-LICENSING.md, sections 4, 6 and 7). SSO's admin form offers exactly these keys, so a
  * drift in either place means a licence the other side cannot honour.
  *
- * The literal list below is the pin that always runs. The contract itself lives in the PARENT (platform) repo,
- * so when this repo is checked out alone (CI) the cross-check against the document is a no-op, not a failure.
+ * The literal list below is the pin that always runs. The contract itself is docs/operations/PLATFORM-LICENSING.md in this
+ * repository, and the cross-check against it runs too (it returns early only if that file is absent).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -33,9 +33,9 @@ describe("licence constants match the contract", () => {
     expect(LICENSE_SSO_PUBLIC_PATH).toBe("/api/v1/licenses/public/dms");
   });
 
-  const contractPath = path.resolve(__dirname, "..", "..", "..", "docs", "operations", "PLATFORM-LICENSING.md");
+  const contractPath = path.resolve(__dirname, "..", "..", "docs", "operations", "PLATFORM-LICENSING.md");
   // Not it.skip: CI counts tests (Documentations/TEST_STATUS.md), so the count must not depend on where the repo is checked out.
-  it("the keys in the contract document itself (checked only when this repo sits inside the platform checkout)", () => {
+  it("the keys in the contract document itself (docs/operations/PLATFORM-LICENSING.md)", () => {
     if (!fs.existsSync(contractPath)) return;
     const doc = fs.readFileSync(contractPath, "utf-8");
     const start = doc.indexOf("- **DMS:**");

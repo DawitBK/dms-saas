@@ -1,6 +1,6 @@
 /**
  * Tenant-scoping verification for the `users` module — R-06 of
- * Documentations/audits/AUDIT-FINDINGS-2026-09-03.md.
+ * audit 2026-09-03.
  *
  * `users` has no tenant_id (membership is many-to-many through
  * `user_tenants`), and neither listUsers nor getUser joined it. So

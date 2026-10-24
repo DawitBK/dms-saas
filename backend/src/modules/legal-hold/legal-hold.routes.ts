@@ -200,7 +200,7 @@ legalHoldRoutes.get(
   requirePermission(PERMISSIONS.LEGAL_HOLD_READ),
   asyncHandler(async (req, res) => {
     const { AuditLog } = await import('../../infrastructure/database/index.js');
-    // R-05 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): this was a bare
+    // R-05 (audit 2026-09-03): this was a bare
     // `action_details LIKE '%<id>%'` over a TEXT column on audit_logs — the
     // largest, highest-write table in the system — with no other selective
     // predicate. Correct, but a sequential scan of the entire tenant's audit

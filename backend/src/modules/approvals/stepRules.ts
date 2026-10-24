@@ -1,6 +1,6 @@
 // The ONE implementation of the approval-step assignment and decision rules.
 //
-// Documentations/audits/AUDIT-FINDINGS-2026-09-03.md R-08 ("two approval engines coexist"): letters
+// audit 2026-09-03 R-08 ("two approval engines coexist"): letters
 // (`letters.service.ts`) and the unified engine (`approvals.service.ts`) each
 // carried their own copy of these rules. The engine's copy was even labelled
 // "Mirror of letters' assertStepIsActionable" — and the two had already

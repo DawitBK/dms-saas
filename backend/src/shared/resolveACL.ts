@@ -1347,7 +1347,7 @@ export function requireACL(options: Omit<AclCheckOptions, 'resourceId'> & { reso
       } else {
         const errCode = result.effect === "DENY" ? "AUTHZ_ACL_DENIED" : "AUTHZ_ACL_NO_ENTRY";
         const errMessage = result.effect === "DENY" ? "Access denied by ACL" : "No access control entry for this resource";
-        // AUDIT-FINDINGS-2026-08-11 data-flow sweep #3: requirePermission's
+        // audit 2026-08-11 data-flow sweep #3: requirePermission's
         // RBAC denial writes AUTHZ_ROLE_DENIED (auth.ts) — this ACL DENY-first
         // path, the more security-critical mechanism per the prior audit's
         // finding #2 on this exact code, never audited a denial at all.

@@ -1,6 +1,6 @@
 export {};
 
-// TEST-1 (Documentations/audits/AUDIT-FINDINGS-2026-09-18.md): modules/legal-hold/ had zero test
+// TEST-1 (audit 2026-09-18): modules/legal-hold/ had zero test
 // coverage of any kind, automated or manual — this is the feature whose
 // entire purpose is guaranteeing a document CANNOT be destroyed once placed
 // under hold, which makes it one of the two most legally consequential

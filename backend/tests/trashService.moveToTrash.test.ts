@@ -1,6 +1,6 @@
 export {};
 
-// TEST-1/TEST-2 (Documentations/audits/AUDIT-FINDINGS-2026-09-18.md): "legal hold blocks trash" was
+// TEST-1/TEST-2 (audit 2026-09-18): "legal hold blocks trash" was
 // one of the 8 scenarios `sprint4.integration.test.ts` claimed to cover —
 // its assertion was `expect(error.statusCode).toBe(403)` against a
 // hand-written literal object that was never produced by any application

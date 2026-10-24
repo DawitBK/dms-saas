@@ -178,7 +178,7 @@ export async function authoriseDisposal(documentId: string, userId: string, tena
       transaction
     });
     await archive.update({ status: "DISPOSED", disposedAt: new Date() }, { transaction });
-    // AUDIT-FINDINGS-2026-08-11 data-flow sweep #5: staging (processRetentionQueue)
+    // audit 2026-08-11 data-flow sweep #5: staging (processRetentionQueue)
     // fans out RETENTION.DISPOSAL_PENDING (WEBSOCKET, webhook-eligible, + owner
     // EMAIL); the irreversible execution step that actually follows it had
     // neither — external/compliance systems were told a document might be

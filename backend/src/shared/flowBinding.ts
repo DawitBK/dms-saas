@@ -17,7 +17,7 @@
  *
  * Hashing before comparing keeps both operands at a fixed 32 bytes, which
  * sidesteps timingSafeEqual's throw-on-length-mismatch and keeps the token's
- * length from leaking. Mirrors SSO/backend/src/auth/flow-binding.ts, which does
+ * length from leaking. Mirrors SSO's `flow-binding.ts`, which does
  * the same for the portal and GMS-bridge legs of the same platform flow.
  */
 

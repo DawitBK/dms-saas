@@ -1,9 +1,9 @@
 # DMS — Master System Documentation
 
 **Status:** canonical, authoritative reference for the DMS (Document & Archive Management System / "EDAMS") codebase as it exists in this working copy.
-**Scope:** DMS only. SSO and GMS are separate systems documented separately — see the platform root `CLAUDE.md`.
-**Method:** every claim below was traced to source (file:line citations throughout) — the backend route files, models, config schema, migrations, worker files, deploy runbooks, and the platform `DEPLOYMENT-GUIDE.md` — not copied from prose docs without verification. Where existing docs (`ARCHITECTURE.md`, `SYSTEM-DECISIONS.md`, `README.md`, `CLAUDE.md`, `Documentations/rollout.md`, `CHANGELOG.md`, `dms-docs.html`) already had accurate canonical content, it is incorporated and cross-referenced rather than re-derived from scratch.
-**Do not** read this as a second, competing doc — it replaced `dms-docs.html` as the deep-dive entry point (that file was deleted on 2026-09-06 — dated July, it still documented the pre-migration ports 3000/4000). The per-file canonical docs (`ARCHITECTURE.md`, `SYSTEM-DECISIONS.md`, `README.md`, `CLAUDE.md`) remain authoritative for their own narrow scope and are cited throughout; this document's job is to be the single place that connects all of them into one operable picture.
+**Scope:** DMS only. SSO and GMS are separate systems documented separately.
+**Method:** every claim below was traced to source (file:line citations throughout) — the backend route files, models, config schema, migrations, worker files and deploy runbooks — not copied from prose docs without verification. Where existing docs (`ARCHITECTURE.md`, `SYSTEM-DECISIONS.md`, `README.md`, `Documentations/rollout.md`, `CHANGELOG.md`, `dms-docs.html`) already had accurate canonical content, it is incorporated and cross-referenced rather than re-derived from scratch.
+**Do not** read this as a second, competing doc — it replaced `dms-docs.html` as the deep-dive entry point (that file was deleted on 2026-09-06 — dated July, it still documented the pre-migration ports 3000/4000). The per-file canonical docs (`ARCHITECTURE.md`, `SYSTEM-DECISIONS.md`, `README.md`) remain authoritative for their own narrow scope and are cited throughout; this document's job is to be the single place that connects all of them into one operable picture.
 
 Legend used throughout: **[V]** verified directly against source in this session. **[CFG]** configuration/deployment-dependent (behavior changes with an env var or selected backend). **[GAP]** a documented, known limitation — not a bug, a stated scope boundary.
 
@@ -13,7 +13,7 @@ Legend used throughout: **[V]** verified directly against source in this session
 
 ### 1.1 What DMS is
 
-DMS ("Document Management System", internally and in ~19 database/token identifiers still called **EDAMS** — see §33.1 for why that name persists) is a multi-tenant **document and records management platform** built as a modular monolith. It is one of three systems on the Example Corp internal platform (with GMS and SSO), sharing one internal server and one identity provider, but is fully self-contained: its own database (`dmsprod`), its own document store, its own approval/workflow engine. [V — `README.md`, root `CLAUDE.md`]
+DMS ("Document Management System", internally and in ~19 database/token identifiers still called **EDAMS** — see §33.1 for why that name persists) is a multi-tenant **document and records management platform** built as a modular monolith. It is one of three systems on the Example Corp internal platform (with GMS and SSO), sharing one internal server and one identity provider, but is fully self-contained: its own database (`dmsprod`), its own document store, its own approval/workflow engine. [V — `README.md`]
 
 It manages the complete lifecycle of an enterprise document — capture, classification, versioning, approval, digital signing, archive, retention, legal hold, and certified disposal — plus **CAMS**, a correspondence (incoming/outgoing letter) module built on top of the same document substrate.
 
@@ -61,11 +61,11 @@ Seven seeded roles (a *reference configuration*, not an architectural constant �
 - **Depends on (required):** PostgreSQL 15+/16, Redis ≥ 6.2 (hard version-checked at boot, `assertRedisVersion`).
 - **Depends on (optional, degrades gracefully):** MinIO (→ local disk), Meilisearch (→ Postgres ILIKE), ClamAV (→ uploads recorded unscanned), an AI provider (→ AI routes return 403 until a tenant opts in).
 - **External systems:** the platform SSO/IdP (real OIDC relying party, client id `edams`) for production login; an LLM provider for the AI assistant (opt-in, provider-agnostic).
-- **Does NOT integrate with:** `retail-os`, `carrier-os` (explicitly standalone, per platform `CLAUDE.md`); MRS (retired 2026-09-04).
+- **Does NOT integrate with:** `retail-os`, `carrier-os` (explicitly standalone); MRS (retired 2026-09-04).
 
 ### 1.6 Current deployment model
 
-**Live, in production, on the Example Corp internal server**: **native** (no Docker), at `B:\Company_Systems\DMS`, backend on loopback `127.0.0.1:7100`, frontend on `127.0.0.1:7101`, reverse-proxied by the shared Apache instance at `https://portal.examplecorp.com/dms` (and `/dms/api/v1`). Three separate console-window processes: API, BullMQ worker, frontend — split deliberately after a 2026-08-28 incident where a native segfault inside a PDF-OCR rasterization library took the whole API process down mid-request (root DEPLOYMENT-GUIDE.md line ~558-568). Database `dmsprod` lives on the same shared Postgres instance as `gmsprod`/`idpprod`. See §23 for the full procedure. [V — root `/DEPLOYMENT-GUIDE.md`]
+**Reference production deployment (the Example Corp internal server)**: **native** (no Docker), in the install folder (for example `C:\apps\dms`), backend on loopback `127.0.0.1:7100`, frontend on `127.0.0.1:7101`, reverse-proxied by the shared Apache instance at `https://portal.examplecorp.com/dms` (and `/dms/api/v1`). Three separate console-window processes: API, BullMQ worker, frontend — split deliberately after a 2026-08-28 incident where a native segfault inside a PDF-OCR rasterization library took the whole API process down mid-request. Database `dmsprod` lives on the same shared Postgres instance as `gmsprod`/`idpprod`. See §23 for the full procedure. [V — `Documentations/DEPLOY-WINDOWS-MANUAL.md`]
 
 A self-contained Docker Compose stack (`docker-compose.prod.yml` + `.env.prod.example` + `deploy/`) is also carried in-repo as a supported *alternate* path (VPS/standalone use), but is **not** what the Example Corp server runs. Do not conflate the two when reasoning about "is Docker the problem" — on this server, Docker is not involved in DMS at all.
 
@@ -136,7 +136,7 @@ Each module's `*.service.ts` holds the actual business logic — validation, sta
 
 ### 2.6 Data layer — transactions and the transactional outbox
 
-Two load-bearing conventions, both non-obvious and both explained in the codebase's own comments (`ARCHITECTURE.md`, root `CLAUDE.md`):
+Two load-bearing conventions, both non-obvious and both explained in the codebase's own comments (`ARCHITECTURE.md`):
 
 1. **`runInTransaction()`** (`shared/transaction.ts`) is the *only* correct way to open a transaction inside a request. Sequelize 6's CLS (continuation-local storage) integration does **not** make the managed-callback form (`sequelize.transaction(async t => ...)`) join an already-open ambient transaction as a savepoint — it only auto-injects the ambient transaction into individual *queries* that omit an explicit `{transaction}` option. Every `writeAuditLog` call and ~30 other service call sites used the managed-callback form before this was understood, silently opening a second, non-atomic connection per call. `runInTransaction()` reuses the request's already-open transaction (opened by `tenantContext`) when one exists, and falls back to a real `sequelize.transaction()` outside a request (workers, scripts). Anything that must run only *after* the surrounding transaction actually commits (ACL cache invalidation, irreversible storage deletes) uses `transaction.afterCommit(() => ...)` — **never** code placed textually after the `runInTransaction()` call returns, because with a reused ambient transaction the real commit happens later, at HTTP response-finish time. `tests/auditAtomicity.test.ts` pins this guarantee down.
 2. **Transactional outbox** (`infrastructure/queue/outbox.ts`): side effects are written to `outbox_events` in the same DB transaction as the domain change, then dispatched by a 5-second poller. Channels: `WEBSOCKET`, `EMAIL`, `WEBHOOK`, `OCR`, `SEARCH_INDEX`. At-least-once delivery, `attempts < maxAttempts` (3), exponential backoff. Per-channel max-age before an event is abandoned: `OUTBOX_EMAIL_MAX_AGE_HOURS` (default 72h) for EMAIL/WEBHOOK; WEBSOCKET is deliberately much shorter (a stale realtime push is worthless); OCR/SEARCH_INDEX never expire. **Critical ordering rule**: EMAIL/WEBSOCKET dedupe guards and WEBHOOK fan-out dedupe are claimed only *after* the side effect actually succeeds, never before — claiming first and only then attempting delivery would turn a transient failure into silent, permanent loss (at-least-once degrading to at-most-once).
@@ -147,7 +147,7 @@ Full detail in §13 (search), §14 (storage), §15 (OCR), §16 (PDF), §17 (e-si
 
 ### 2.8 Reverse proxy / routing (production)
 
-Apache is the single public entry point (80/443). Path-based routing: `/dms` → `127.0.0.1:7101` (frontend), `/dms/api/v1` → `127.0.0.1:7100/api/v1` (backend), `/dms/socket.io/` → the backend's Socket.IO listener (prefixed — an unprefixed `/socket.io/` on this server belongs to GMS). `Upgrade`/`Connection` headers must be forwarded on the API location or Socket.IO silently degrades to long-polling. See root `/DEPLOYMENT-GUIDE.md` and §23.
+Apache is the single public entry point (80/443). Path-based routing: `/dms` → `127.0.0.1:7101` (frontend), `/dms/api/v1` → `127.0.0.1:7100/api/v1` (backend), `/dms/socket.io/` → the backend's Socket.IO listener (prefixed — an unprefixed `/socket.io/` on this server belongs to GMS). `Upgrade`/`Connection` headers must be forwarded on the API location or Socket.IO silently degrades to long-polling. See §23.
 
 ### 2.9 Runtime processes (production)
 
@@ -171,7 +171,7 @@ Root: `DMS/` (own git repo, remote `github.com/DawitBK/dms-saas`, checked out as
 | `backend/src/app.ts` | Express app assembly: middleware order, CSP, CORS, rate limiters, tus mount, JWKS, cache-control | Backend | `app.ts` | Middleware **order** is load-bearing (trust-proxy before rate limiters; tus before `express.json()`) — never reorder without reading the inline comments first |
 | `backend/src/main.ts` / `bin/worker.ts` | Process entrypoints — API process vs worker process | Backend | both | Keep the API/worker split; do not merge them back together (see §2.9) |
 | `backend/src/config/` | `env.ts` (Zod-validated env schema + prod boot guards), `permissions.ts` (static role→permission fallback + `PERMISSIONS` catalogue) | Backend/shared | both | New env var: add to schema with a `.default()`/reasoning comment; new permission: add to `PERMISSIONS` + at least one role in `ROLE_PERMISSIONS` |
-| `backend/src/core/` | `AppError`, `logger` (pino), `asyncHandler` | Backend shared | — | Cross-cutting; stable, rarely touched |
+| `backend/src/core/` | `AppError`, `logger` (pino); `asyncHandler` lives in `backend/src/shared/` | Backend shared | — | Cross-cutting; stable, rarely touched |
 | `backend/src/infrastructure/database/models/` | One Sequelize model file per table (63 models) | Backend/data | `index.ts`, `associations.ts` | **Import from `index.ts`/`associations.ts`, never a bare model file** — association wiring only runs once, at `initModels()` |
 | `backend/src/infrastructure/database/sequelize.ts` | Singleton Sequelize instance, pool config | Backend/data | — | Pool size (`DB_POOL_MAX`) is a real concurrency ceiling — see §22 |
 | `backend/src/infrastructure/queue/` | BullMQ workers (15), the transactional outbox poller, queue registration | Backend/infra | `outbox.ts`, `queues.ts`, `workers/*.ts` | New async side effect → new outbox channel + worker, not an inline call from a request handler |
@@ -272,7 +272,7 @@ Root: `DMS/` (own git repo, remote `github.com/DawitBK/dms-saas`, checked out as
 | Node.js | 22.x | Runtime; ESM-native | whole backend |
 | TypeScript | ^5.6.3 | Type safety across a 33-module monolith | whole backend |
 | Express | ^5.2.1 | HTTP framework — v5's native async error propagation removes the need for manual `try/catch` wrapping in most handlers (still wrapped via `asyncHandler` for consistency) | `app.ts`, all routes |
-| Sequelize | ^6.37.5 (pinned; **never** `npm audit fix --force` — see root `CLAUDE.md`, would downgrade to v3) | ORM | `infrastructure/database/` |
+| Sequelize | ^6.37.5 (pinned; **never** `npm audit fix --force` — it would downgrade to v3) | ORM | `infrastructure/database/` |
 | pg / pg-hstore | ^8.13.1 / ^2.3.4 | Postgres driver | — |
 | Redis (ioredis) | ^5.4.1, server ≥ 6.2 required | Cache, BullMQ backing store, rate-limit store, ACL cache invalidation pub/sub | `infrastructure/cache/`, `infrastructure/queue/` |
 | BullMQ | ^5.78.0 | Job queues — 15 named workers | `infrastructure/queue/workers/` |
@@ -323,7 +323,7 @@ Root: `DMS/` (own git repo, remote `github.com/DawitBK/dms-saas`, checked out as
 | react-pdf | ^9.2.1 | PDF preview rendering | document preview, signing field placer |
 | recharts | ^3.8.1 | Reports/dashboard charts | `features/reports` |
 | jspdf / jspdf-autotable | ^4.2.1 / ^5.0.8 | Client-side PDF export (tables/reports) | reports export |
-| xlsx | `file:../vendor/xlsx-0.20.3.tgz` (off-registry — see root `CLAUDE.md`) | Spreadsheet export/import | reports, bulk import UIs |
+| xlsx | `file:../vendor/xlsx-0.20.3.tgz` (off-registry) | Spreadsheet export/import | reports, bulk import UIs |
 | date-fns | ^4.4.0 | Date formatting | app-wide |
 | lucide-react | ^0.468.0 | Icon set | app-wide |
 | @radix-ui/react-dialog/dropdown-menu/tooltip | ^1.x/^2.x | Accessible UI primitives | `shared/components/Modal`, dropdowns |
@@ -345,7 +345,7 @@ Root: `DMS/` (own git repo, remote `github.com/DawitBK/dms-saas`, checked out as
 - Sequelize, exceljs, and minio are all **pinned below the version `npm audit fix --force` would install** — the `--force` targets are major-version *downgrades* for all three (no patched release exists on the current major per npm's advisory data). Never run `--force` in this repo; plain `npm audit fix` is safe (took the tree from 26 advisories to 12).
 - 12 remaining advisories all need a genuine major bump (`next@16`, `nodemailer@10` — already at v10 — `sharp@0.35` — already current — `file-type@22`) plus the three pinned packages above; judge each individually, never batch.
 - `xlsx` has no patched release on the public npm registry at all; the maintained build is distributed off-registry as `vendor/xlsx-0.20.3.tgz` (same tarball/checksum GMS uses).
-- This is an **npm workspaces** repo (`backend`, `frontend`) — the lockfile is `DMS/package-lock.json` at the root; run `npm install` from the repo root, never from `frontend/` alone (or `xlsx`'s relative `file:` path breaks).
+- This is an **npm workspaces** repo (`backend`, `frontend`) — the lockfile is `package-lock.json` at the root; run `npm install` from the repo root, never from `frontend/` alone (or `xlsx`'s relative `file:` path breaks).
 
 ---
 
@@ -353,7 +353,7 @@ Root: `DMS/` (own git repo, remote `github.com/DawitBK/dms-saas`, checked out as
 
 ### 5.1 Engine and connection
 
-PostgreSQL 15+ (16 in the Docker Compose path). Connection built from `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD`/`DB_NAME`, or an explicit `DATABASE_URL` — but an ambient `DATABASE_URL` is **ignored** unless `DATABASE_URL_TRUSTED=true` is also set, specifically to defeat a stray machine-wide Railway/Render `DATABASE_URL` from an unrelated project silently winning (root `CLAUDE.md` "Known footguns"; `config/env.ts` lines 303-317, 604-620). Pool: `DB_POOL_MAX=60` / `DB_POOL_MIN=2` / `DB_POOL_ACQUIRE_MS=30000` / `DB_POOL_IDLE_MS=10000`. Per-statement/transaction timeouts applied via `SET LOCAL` inside the request transaction, not connection-wide: `DB_STATEMENT_TIMEOUT_MS=30000`, `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS=120000` — deliberately transaction-scoped so they never abort the Umzug migration runner or a long backfill script sharing the same Sequelize instance.
+PostgreSQL 15+ (16 in the Docker Compose path). Connection built from `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD`/`DB_NAME`, or an explicit `DATABASE_URL` — but an ambient `DATABASE_URL` is **ignored** unless `DATABASE_URL_TRUSTED=true` is also set, specifically to defeat a stray machine-wide Railway/Render `DATABASE_URL` from an unrelated project silently winning (a known footgun; `config/env.ts` lines 303-317, 604-620). Pool: `DB_POOL_MAX=60` / `DB_POOL_MIN=2` / `DB_POOL_ACQUIRE_MS=30000` / `DB_POOL_IDLE_MS=10000`. Per-statement/transaction timeouts applied via `SET LOCAL` inside the request transaction, not connection-wide: `DB_STATEMENT_TIMEOUT_MS=30000`, `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS=120000` — deliberately transaction-scoped so they never abort the Umzug migration runner or a long backfill script sharing the same Sequelize instance.
 
 **Production database role is never the superuser.** `edams_app` (least-privilege, `NOSUPERUSER NOBYPASSRLS`) is what the API/worker connect as — migrations run separately as the superuser (DDL/RLS-policy ownership; `edams_app` cannot execute DDL by design). `assertProductionRuntimeRequirements()` hard-refuses to boot if `DB_USER=postgres` or the password is empty, in production/staging. [V — `config/env.ts` lines 621-645]
 
@@ -971,7 +971,7 @@ Postgres `ILIKE` has no dedicated text-search index in this schema (no `pg_trgm`
 
 ### 14.2 Current production driver
 
-**Local disk**, on the live Example Corp server — `STORAGE_LOCAL_PATH` pointed at `B:/EXAMPLECORP-DATA/dms-documents`, deliberately **outside** the git checkout (verified by the platform `DEPLOYMENT-GUIDE.md`'s own deploy-checklist item C16, which checks the backend startup log line `StorageAdapter: using local filesystem` names that exact base path). MinIO is a fully supported, tested alternate driver (used by the Docker Compose path) but is not what production runs.
+**Local disk**, on the reference production server — `STORAGE_LOCAL_PATH` pointed at `<storage-folder>/dms-documents`, deliberately **outside** the git checkout (verified by the deploy-checklist item C16, which checks the backend startup log line `StorageAdapter: using local filesystem` names that exact base path). MinIO is a fully supported, tested alternate driver (used by the Docker Compose path) but is not what production runs.
 
 ### 14.3 Path/configuration
 
@@ -1071,7 +1071,7 @@ Full workflow narrative in §9.3; API surface in §6.5. This section covers the 
 ### 17.1 Two signing subsystems, one parked
 
 - **E-signing (`modules/esigning/`) — the live, actively-used subsystem.** Signature-request "envelopes": recipients (internal or external), field placements, serial/parallel ordering, completion tracking, expiry. This is what SYSTEM-DECISIONS.md D8 means by "signed."
-- **PKI subsystem — deliberately parked (D8d).** A self-managed CA keypair (persisted to `storage/.ca-keypair.json`) and real RSA-signature capability exist in the codebase, **unwired** — not deleted, not revived. Kept explicitly as a head start for a possible future PAdES build with real cryptographic, Acrobat-verifiable signatures embedded in PDF byte ranges. No investment beyond keeping it compiling.
+- **PKI subsystem — deliberately parked (D8d).** A self-managed CA keypair (persisted to `backend/storage/.ca-keypair.json`) and real RSA-signature capability exist in the codebase, **unwired** — not deleted, not revived. Kept explicitly as a head start for a possible future PAdES build with real cryptographic, Acrobat-verifiable signatures embedded in PDF byte ranges. No investment beyond keeping it compiling.
 
 ### 17.2 PKCS#12 handling
 
@@ -1269,7 +1269,7 @@ Zod schemas at the route layer for several modules (letters, org-units, feature-
 
 ### 21.6 Error handling
 
-`AppError` (`core/AppError.ts`) — a typed application error (HTTP status + machine-readable `code` + message) thrown from anywhere in a service, caught by `errorHandler` (`shared/middleware.ts`, the last middleware in `app.ts`) and shaped into a consistent `{error:{code,message}}` JSON body. `asyncHandler` (`core/asyncHandler.ts`) wraps every route handler so a rejected promise reaches `errorHandler` rather than crashing the process (belt-and-suspenders on top of Express 5's own native async-error propagation).
+`AppError` (`core/AppError.ts`) — a typed application error (HTTP status + machine-readable `code` + message) thrown from anywhere in a service, caught by `errorHandler` (`shared/middleware.ts`, the last middleware in `app.ts`) and shaped into a consistent `{error:{code,message}}` JSON body. `asyncHandler` (`shared/asyncHandler.ts`) wraps every route handler so a rejected promise reaches `errorHandler` rather than crashing the process (belt-and-suspenders on top of Express 5's own native async-error propagation).
 
 ### 21.7 Authentication / authorization (backend)
 
@@ -1368,7 +1368,7 @@ This is a deliberately-designed pattern, not an oversight — `MINIO_ACCESS_KEY`
 
 ### 22.4 Production boot guards (`assertProductionRuntimeRequirements()`, runs only when `NODE_ENV∈{production,staging}`)
 
-Hard-refuses boot (throws, before the server ever listens) on: an untrusted ambient `DATABASE_URL`; empty DB password or `DB_USER=postgres`; missing `AUTH_JWKS_URI`/`AUTH_ISSUER`/`AUTH_AUDIENCE`; JWT secrets <32 chars; `MEILISEARCH_MASTER_KEY` missing when Meilisearch selected; `AUDIT_HMAC_SECRET` still the example placeholder; MinIO secret key still a `minioadmin*` default; `SMTP_HOST` pointing at localhost/127.0.0.1; `EMAIL_REDIRECT_TO` set at all; `DEV_VAULT_MOCK=true`; `DEV_JWT_ISSUER`/`DEV_JWT_AUDIENCE` set at all (a real prior incident — a prod token's `iss` claim read `http://localhost:7300`); `ENABLE_API_DOCS=true`; `VAULT_BACKEND` not `env`/`hashicorp`; the current-version KEK master key missing, still the placeholder, or <32 chars. **Does not** hard-refuse `LOCAL_JWT_MOCK=true` (loud warning only, by the 2026-07-31 decision) and — noted explicitly in the platform root `DEPLOYMENT-GUIDE.md` — does **not** reject the literal shared `12345678` DB password convention, which is a settled cross-system decision, not a gap to fix.
+Hard-refuses boot (throws, before the server ever listens) on: an untrusted ambient `DATABASE_URL`; empty DB password or `DB_USER=postgres`; missing `AUTH_JWKS_URI`/`AUTH_ISSUER`/`AUTH_AUDIENCE`; JWT secrets <32 chars; `MEILISEARCH_MASTER_KEY` missing when Meilisearch selected; `AUDIT_HMAC_SECRET` still the example placeholder; MinIO secret key still a `minioadmin*` default; `SMTP_HOST` pointing at localhost/127.0.0.1; `EMAIL_REDIRECT_TO` set at all; `DEV_VAULT_MOCK=true`; `DEV_JWT_ISSUER`/`DEV_JWT_AUDIENCE` set at all (a real prior incident — a prod token's `iss` claim read `http://localhost:7300`); `ENABLE_API_DOCS=true`; `VAULT_BACKEND` not `env`/`hashicorp`; the current-version KEK master key missing, still the placeholder, or <32 chars. **Does not** hard-refuse `LOCAL_JWT_MOCK=true` (loud warning only, by the 2026-07-31 decision) and, as a settled cross-system decision rather than a gap to fix, does **not** reject the shared, well-known weak DB password convention.
 
 ### 22.5 Verifying resolved production config without starting anything
 
@@ -1382,13 +1382,13 @@ Three documented paths exist. **Only one is what the Example Corp server actuall
 
 | Path | Runbook | Used by Example Corp production? |
 |---|---|---|
-| **Native, no Docker** | `Documentations/DEPLOY-WINDOWS-MANUAL.md` + root `/DEPLOYMENT-GUIDE.md` | **Yes — this is the live deployment** |
+| **Native, no Docker** | `Documentations/DEPLOY-WINDOWS-MANUAL.md` | **Yes — this is the live deployment** |
 | Docker Compose (VPS/standalone) | `Documentations/DEPLOY-COMPOSE.md` | No |
 | Disaster recovery restore | `Documentations/DR-RUNBOOK.md` | Only during a restore |
 
-### 23.1 The actual live deployment (verified against root `/DEPLOYMENT-GUIDE.md`)
+### 23.1 The reference live deployment
 
-**Server architecture**: shared Example Corp internal server, one shared Apache reverse proxy fronting GMS/DMS/SSO (MRS retired). DMS lives at `B:\Company_Systems\DMS`. Database `dmsprod` on the same shared Postgres instance as `gmsprod`/`idpprod`. Redis is the server's existing shared instance, DMS on a **separate logical DB index** so its keys don't collide with the other apps on DB 0 (`REDIS_URL=redis://127.0.0.1:6379/1`).
+**Server architecture**: shared Example Corp internal server, one shared Apache reverse proxy fronting GMS/DMS/SSO (MRS retired). DMS lives in its install folder (for example `C:\apps\dms`). Database `dmsprod` on the same shared Postgres instance as `gmsprod`/`idpprod`. Redis is the server's existing shared instance, DMS on a **separate logical DB index** so its keys don't collide with the other apps on DB 0 (`REDIS_URL=redis://127.0.0.1:6379/1`).
 
 **Ports**: backend `7100` (loopback-only, `HOST=127.0.0.1`), frontend `7101` (loopback-only). Apache alone owns 80/443 and does path routing: `/dms → 127.0.0.1:7101`, `/dms/api/v1 → 127.0.0.1:7100/api/v1`, `/dms/socket.io/ → 127.0.0.1:7100` (prefixed — an unprefixed `/socket.io/` on this shared server belongs to GMS).
 
@@ -1408,11 +1408,11 @@ GRANT CREATE ON DATABASE dmsprod TO edams_app;
 **Build / migrate / seed**:
 
 ```
-Set-Location B:\Company_Systems\DMS
+Set-Location C:\apps\dms
 npm install
 npm run build
 
-Set-Location B:\Company_Systems\DMS\backend
+Set-Location C:\apps\dms\backend
 npm run db:migrate:prod        # as edams_app itself now (backend\.env.production must already set DB_USER=edams_app and edams_app must already have all four grants above)
 npm run db:seed:reference      # NOT seed-core — that's the demo seed and refuses to run in production entirely
 ```
@@ -1421,15 +1421,15 @@ npm run db:seed:reference      # NOT seed-core — that's the demo seed and refu
 
 ```
 # Window 1 — API (backend\.env.production sets ENABLE_QUEUE_WORKERS=false)
-Set-Location B:\Company_Systems\DMS\backend
+Set-Location C:\apps\dms\backend
 npm run start:prod
 
 # Window 2 — worker
-Set-Location B:\Company_Systems\DMS\backend
+Set-Location C:\apps\dms\backend
 npm run worker:prod
 
 # Window 3 — frontend
-Set-Location B:\Company_Systems\DMS\frontend
+Set-Location C:\apps\dms\frontend
 npm run start
 ```
 
@@ -1441,7 +1441,7 @@ npm run start
 |---|---|
 | `AUTH_ISSUER`/`AUTH_JWKS_URI`/`AUTH_AUDIENCE` | SSO's real issuer/JWKS/audience — a mismatch here presents as an immediate 401 after an otherwise-successful login (this exercises the exact `iss`/`aud` fix in `auth.routes.ts`) |
 | `OIDC_CLIENT_SECRET` | SSO's `EDAMS_CLIENT_SECRET` for client id `edams` |
-| `DMS_INTERNAL_API_KEY` | SSO's own `DMS_INTERNAL_API_KEY` (§6.10) — **not** the root `DMS\.env.prod`, which is the unused Docker Compose file; comparing against the wrong file is a repeat mix-up the deploy checklist calls out by name |
+| `DMS_INTERNAL_API_KEY` | SSO's own `DMS_INTERNAL_API_KEY` (§6.10) — **not** the root `.env.prod`, which is the unused Docker Compose file; comparing against the wrong file is a repeat mix-up the deploy checklist calls out by name |
 
 SSO's own `.env.production` points at DMS with `DMS_OIDC_AUTHORIZE_URL=https://portal.examplecorp.com/dms/api/v1/auth/oidc/authorize`, `DMS_BACKCHANNEL_LOGOUT_URI=https://portal.examplecorp.com/dms/api/v1/auth/backchannel-logout`, `DMS_API_BASE_URL=http://127.0.0.1:7100/api/v1` (direct server-to-server, bypassing Apache entirely for this internal call).
 
@@ -1452,9 +1452,9 @@ SSO's own `.env.production` points at DMS with `DMS_OIDC_AUTHORIZE_URL=https://p
 | Check | Expected |
 |---|---|
 | `dmsprod` exists on the shared Postgres instance | `psql -l` lists it |
-| `npm run env:verify:prod` (from `DMS\backend`) | `DB_NAME dmsprod`, `EMAIL_REDIRECT_TO (unset, correct)`, `All production guards passed.` |
+| `npm run env:verify:prod` (from `backend`) | `DB_NAME dmsprod`, `EMAIL_REDIRECT_TO (unset, correct)`, `All production guards passed.` |
 | DMS backend startup log | `[vault] KEK self-test passed` — a failure here means the configured `VAULT_MASTER_KEY` cannot decrypt what is already stored; **stop and let nobody upload** |
-| DMS backend startup log | `StorageAdapter: using local filesystem` with base `B:/EXAMPLECORP-DATA/dms-documents` — if the base is under `DMS\backend\`, `STORAGE_LOCAL_PATH` is not being read and the corpus is landing inside the git checkout |
+| DMS backend startup log | `StorageAdapter: using local filesystem` with base `<storage-folder>/dms-documents` — if the base is under `backend\`, `STORAGE_LOCAL_PATH` is not being read and the corpus is landing inside the git checkout |
 | `Invoke-WebRequest https://portal.examplecorp.com/dms/api/v1/health` | 200 |
 | Sign in via SSO portal, both tiles (EDAMS/DMS + GMS) | Each returns to that app's dashboard, not a 404 |
 | Log in via SSO, refresh the page, wait for a token refresh | No 401 — exercises the `iss`/`aud` matching above |
@@ -1561,7 +1561,7 @@ Plus a manual end-to-end: download one known document **and** one letter PDF (pr
 
 ### 25.6 The restore drill (acceptance test for this whole runbook)
 
-Rehearse once before go-live and after any major storage change, on a scratch machine or scratch compose project. `deploy/dms-restore-drill.ps1` (in the platform-root repo's `deploy/`, one level up from this DMS checkout — not `DMS/deploy/`) automates the **database half**: creates a disposable scratch database (refuses any name containing "prod" as a safety backstop), restores a given dump into it, spot-checks row counts on key tables, then drops the scratch database. It does **not** cover the MinIO blob restore or DEK-unwrap verification — those must be run manually against a scratch compose stack, at minimum quarterly, in addition to the script. A dated log table exists in the runbook for recording each drill's outcome — as of this session, it shows **"pending first drill"** (no drill has yet been recorded). **[GAP — operationally important, explicitly tracked as not-yet-done rather than silently absent]**
+Rehearse once before go-live and after any major storage change, on a scratch machine or scratch compose project. A restore-drill script (platform tooling, not part of this repository) automates the **database half**: creates a disposable scratch database (refuses any name containing "prod" as a safety backstop), restores a given dump into it, spot-checks row counts on key tables, then drops the scratch database. It does **not** cover the MinIO blob restore or DEK-unwrap verification — those must be run manually against a scratch compose stack, at minimum quarterly, in addition to the script. A dated log table exists in the runbook for recording each drill's outcome — as of this session, it shows **"pending first drill"** (no drill has yet been recorded). **[GAP — operationally important, explicitly tracked as not-yet-done rather than silently absent]**
 
 ### 25.7 Recovery order (summary)
 
@@ -1623,7 +1623,7 @@ CI runs `npm audit --omit=dev --audit-level=high` via `tools/audit-gate.mjs` —
 
 ### 26.9 Secrets / server security
 
-Every real secret lives only in gitignored env files (`.env.production`, `.env.prod`), never committed. `backend/storage/` (runtime uploads) is gitignored. `TRUST_PROXY`, CORS allowlist, CSP, and the internal-API IP allowlist are the network-boundary controls; loopback-only `HOST` binding on both backend ports means the Apache proxy is the sole network path to either process — verified as a deploy-checklist item on the live server (`C5`, root `DEPLOYMENT-GUIDE.md`).
+Every real secret lives only in gitignored env files (`.env.production`, `.env.prod`), never committed. `backend/storage/` (runtime uploads) is gitignored. `TRUST_PROXY`, CORS allowlist, CSP, and the internal-API IP allowlist are the network-boundary controls; loopback-only `HOST` binding on both backend ports means the Apache proxy is the sole network path to either process — verified as a deploy-checklist item on the live server (`C5`).
 
 ### 26.10 Remaining considerations (honestly stated, not disguised)
 
@@ -1654,7 +1654,7 @@ Distinct from both Jest and Playwright — these run against a genuinely running
 
 ### 27.5 Manual test coverage
 
-`Documentations/DMS_E2E_Test_Guide.xlsx` — 26 sheets, **252 manual test cases**, covering setup, auth, the full permission matrix, ACL, multi-tenancy, lifecycle, versioning, search, workflow/SLA, retention, signing, forms, OCR/AI, audit, realtime, webhooks, rate limiting, reports, and bulk operations. This is the manual retest checklist for anything the automated suites don't (or structurally can't) cover.
+A 26-sheet, **252-case manual test checklist** (not included in this edition) — covering setup, auth, the full permission matrix, ACL, multi-tenancy, lifecycle, versioning, search, workflow/SLA, retention, signing, forms, OCR/AI, audit, realtime, webhooks, rate limiting, reports, and bulk operations. This is the manual retest checklist for anything the automated suites don't (or structurally can't) cover.
 
 ### 27.6 CI (`​.github/workflows/ci.yml`)
 
@@ -1668,7 +1668,7 @@ Two jobs: **`typecheck-test-build`** (typecheck both workspaces, lint both, `aud
 
 ### 27.8 Regression strategy
 
-The combination of (a) a CI gate that fails the build if `TEST_STATUS.md` doesn't match the real Jest run, (b) `audit-gate.mjs`'s written-exception dependency-vulnerability gate, and (c) live-HTTP verifiers proving behavior the unit suite can't reach, is the operative regression-prevention strategy — there is no separate manual regression-sign-off process beyond the `Documentations/DMS_E2E_Test_Guide.xlsx` checklist for pre-release verification.
+The combination of (a) a CI gate that fails the build if `TEST_STATUS.md` doesn't match the real Jest run, (b) `audit-gate.mjs`'s written-exception dependency-vulnerability gate, and (c) live-HTTP verifiers proving behavior the unit suite can't reach, is the operative regression-prevention strategy — there is no separate manual regression-sign-off process beyond the manual checklist (not included in this edition) for pre-release verification.
 
 ---
 
@@ -1681,7 +1681,7 @@ The combination of (a) a CI gate that fails the build if `TEST_STATUS.md` doesn'
 | `DB_POOL_MAX=60` is the real concurrency ceiling, because `tenantContext` holds a connection for the full request lifetime | `config/env.ts` comment, verified against live `pg_stat_activity` |
 | Shared Postgres instance's `max_connections=100` across GMS/DMS/SSO | Verified against live `pg_stat_activity` per the same comment |
 | `GET /operations/health` previously scaled its dependency-probe rate linearly with concurrent logins (30s dashboard poll × every signed-in user) | Fixed; the fix's own commit comment documents the before-state as measured, not hypothetical |
-| CAMS legal-hold history query was a full sequential scan of `audit_logs` filtered only by a `LIKE` on `action_details`, on the largest/highest-write table in the system | `Documentations/audits/AUDIT-FINDINGS-2026-09-03.md` R-05, fixed by constraining on `event_type` first |
+| CAMS legal-hold history query was a full sequential scan of `audit_logs` filtered only by a `LIKE` on `action_details`, on the largest/highest-write table in the system | audit 2026-09-03 R-05, fixed by constraining on `event_type` first |
 | Word-count diff endpoint's LCS algorithm is O(m·n) time **and** memory with no cap before the fix | Fixed with a 5000-word/version ceiling |
 
 ### 28.2 Bottlenecks (identified and addressed)
@@ -1732,7 +1732,7 @@ Symptom-indexed. Each entry: symptom → likely cause → check → fix → veri
 | Every authenticated request returns `503 ERR-AUTH-REVOCATION-UNAVAILABLE` | Redis is down or unreachable | `redis-cli ping` against the configured `REDIS_URL` | Restore Redis; this is fail-closed **by design** in production, not a bug | `/operations/health`'s `redis` field returns `ok` |
 | SSO login succeeds, then an immediate 401 on the very next request | `AUTH_ISSUER`/`AUTH_AUDIENCE` mismatch between DMS and what SSO actually issues, or `DEV_JWT_ISSUER`/`AUDIENCE` accidentally set | `npm run env:verify:prod`'s issuer printout; confirm `DEV_JWT_ISSUER` is unset in prod | Match DMS's `AUTH_ISSUER`/`AUTH_AUDIENCE` to SSO's real values; unset any `DEV_JWT_*` override | Log in again, refresh the page |
 | First-time SSO users all land as `EMPLOYEE` regardless of their AD group | `OIDC_SCOPES` doesn't request `ad_groups edams_roles` | Inspect the id_token claims received at callback | Set `OIDC_SCOPES=openid profile email ad_groups edams_roles` | New SSO user gets the mapped role |
-| `/internal/roles/*` calls from SSO return 401/403 | `DMS_INTERNAL_API_KEY` mismatch, or the caller's IP isn't in `INTERNAL_API_ALLOWED_IPS` | Compare the key in both systems' env files (not the unused root `DMS\.env.prod`); confirm the call is loopback | Sync the key; confirm SSO calls DMS over `127.0.0.1` | Retry the SSO admin-console action |
+| `/internal/roles/*` calls from SSO return 401/403 | `DMS_INTERNAL_API_KEY` mismatch, or the caller's IP isn't in `INTERNAL_API_ALLOWED_IPS` | Compare the key in both systems' env files (not the unused root `.env.prod`); confirm the call is loopback | Sync the key; confirm SSO calls DMS over `127.0.0.1` | Retry the SSO admin-console action |
 | `[vault] KEK SELF-TEST FAILED` at boot | Configured `VAULT_MASTER_KEY` doesn't match what already-stored documents were encrypted under | Compare against the escrowed key for this environment | **Stop — do not let anyone upload** until resolved; this is not a warning to work around | Restart, confirm `[vault] KEK self-test passed` |
 | Uploaded documents 404 after a redeploy | `STORAGE_LOCAL_PATH` unset/relative and the process's cwd changed | Check the startup log's `StorageAdapter: using local filesystem` base path | Set an absolute `STORAGE_LOCAL_PATH`; if a new empty store was created, copy the real store back into place | Confirm the logged base path matches the real corpus location |
 | Every outbound email goes to one unexpected address | `EMAIL_REDIRECT_TO` accidentally set in production | Boot should have already refused — if it somehow didn't, check `.env.production` directly | Delete the line entirely (never "widen" the guard) | Boot guard passes, and/or a real test email reaches its real recipient |
@@ -1802,7 +1802,7 @@ Everything under `/api/v1` is the sanctioned integration surface. Per `Documenta
 
 ### 31.2 SSO integration pattern (Mode A — real OIDC client)
 
-Fully described in §7.3. This is the pattern a *new* relying-party system on this platform should follow if it wants a first-class, JIT-provisioned identity — as opposed to GMS's different, token-bridge pattern (a platform-level architectural choice documented in the root `CLAUDE.md`, not something DMS itself needs to know about beyond "we are Mode A").
+Fully described in §7.3. This is the pattern a *new* relying-party system on this platform should follow if it wants a first-class, JIT-provisioned identity — as opposed to GMS's different, token-bridge pattern (a platform-level architectural choice, not something DMS itself needs to know about beyond "we are Mode A").
 
 ### 31.3 Authentication for a new integration
 
@@ -1898,7 +1898,7 @@ The `hashicorp` `VAULT_BACKEND` client implementation exists and has unit-level 
 
 ### 33.7 Restore drill not yet performed
 
-`DR-RUNBOOK.md`'s drill log shows "pending first drill" — the disaster-recovery *procedure* is written and partially automated (`dms-restore-drill.ps1` for the DB half), but has not yet been executed and recorded even once. No numeric RTO exists as a result — only the procedure's steps, untimed in practice.
+`DR-RUNBOOK.md`'s drill log shows "pending first drill" — the disaster-recovery *procedure* is written and partially automated (a restore-drill script for the DB half), but has not yet been executed and recorded even once. No numeric RTO exists as a result — only the procedure's steps, untimed in practice.
 
 ### 33.8 No dedicated full-text index on the Postgres search fallback
 
@@ -1958,7 +1958,7 @@ Schema/data: `migrate.ts`, `check-migration-safety.ts`, `seed-reference-data.ts`
 
 ### 34.8 Tests
 
-52 Jest suites / 478 tests (backend); Vitest suite (frontend); 5 Playwright specs (e2e); 252-case manual checklist (`Documentations/DMS_E2E_Test_Guide.xlsx`).
+52 Jest suites / 478 tests (backend); Vitest suite (frontend); 5 Playwright specs (e2e); 252-case manual checklist (not included in this edition).
 
 ### 34.9 Configuration
 
@@ -1970,16 +1970,16 @@ Platform SSO/IdP (OIDC relying party, client `edams`); MinIO (optional); Meilise
 
 ### 34.11 Documentation (canonical locations)
 
-`README.md` (run/configure/what it does) → `ARCHITECTURE.md` (reference) → **this document** (deep-dive, supersedes `dms-docs.html`) → `SYSTEM-DECISIONS.md` (authoritative for the approval engine, D1–D14) → `CHANGELOG.md` (history) → `Documentations/rollout.md` (safe-shipping discipline) → `Documentations/` (BRD/FRD/TDD specs, deployment runbooks, `TEST_STATUS.md`). `Documentations/audits/AUDIT-FINDINGS-2026-07-26.md`/`Documentations/audits/AUDIT-FINDINGS-2026-09-03.md` are **closed** registers cited by number from ~20 source files — never renumber, never read as open worklists.
+`README.md` (run/configure/what it does) → `ARCHITECTURE.md` (reference) → **this document** (deep-dive, supersedes `dms-docs.html`) → `SYSTEM-DECISIONS.md` (authoritative for the approval engine, D1–D14) → `CHANGELOG.md` (history) → `Documentations/rollout.md` (safe-shipping discipline) → `Documentations/` (BRD/FRD/TDD specs, deployment runbooks, `TEST_STATUS.md`). The 2026-07-26 and 2026-09-03 audits are **closed** registers (their reports are not part of this edition) cited by number from ~20 source files — never renumber, never read as open worklists.
 
 ### 34.12 Deployment artifacts
 
-`docker-compose.prod.yml` + `.env.prod.example` + `deploy/` (Caddy, Postgres-init, backup sidecar, Prometheus config) — Docker path only. `Documentations/DEPLOY-WINDOWS-MANUAL.md` — the actual live-deployment procedure. `Documentations/DR-RUNBOOK.md` + platform-root `deploy/dms-restore-drill.ps1` — disaster recovery. `.github/workflows/ci.yml` — CI. `tools/audit-gate.mjs`, `tools/generate-test-status.mjs`, `tools/create-dms-governance-workbook.mjs` — supporting tooling.
+`docker-compose.prod.yml` + `.env.prod.example` + `deploy/` (Caddy, Postgres-init, backup sidecar, Prometheus config) — Docker path only. `Documentations/DEPLOY-WINDOWS-MANUAL.md` — the actual live-deployment procedure. `Documentations/DR-RUNBOOK.md` + the platform restore-drill script — disaster recovery. `.github/workflows/ci.yml` — CI. `tools/audit-gate.mjs`, `tools/generate-test-status.mjs`, `tools/create-dms-governance-workbook.mjs` — supporting tooling.
 
 ---
 
 ## Final Validation Notes
 
-This document was produced by direct inspection of the current source tree in this session — every route table, permission list, config schema entry, state-machine transition, worker list, and deployment procedure above was read from the actual file named beside it (not reconstructed from memory of prior documentation), and cross-checked against `ARCHITECTURE.md`/`SYSTEM-DECISIONS.md`/`README.md`/`CLAUDE.md`/`CHANGELOG.md`/`Documentations/rollout.md`/root `DEPLOYMENT-GUIDE.md` for consistency. Where those existing docs and the code agreed, both are cited; no contradiction between this document and the code was found during the drafting pass. Sections explicitly marked **[GAP]** are genuine, stated limitations — not smoothed over. This document is the canonical DMS deep-dive entry point — `README.md`, `ARCHITECTURE.md`, `CLAUDE.md`, and `CONTRIBUTING.md` all now point here rather than at the retired `dms-docs.html`.
+This document was produced by direct inspection of the current source tree in this session — every route table, permission list, config schema entry, state-machine transition, worker list, and deployment procedure above was read from the actual file named beside it (not reconstructed from memory of prior documentation), and cross-checked against `ARCHITECTURE.md`/`SYSTEM-DECISIONS.md`/`README.md`/`CHANGELOG.md`/`Documentations/rollout.md` for consistency. Where those existing docs and the code agreed, both are cited; no contradiction between this document and the code was found during the drafting pass. Sections explicitly marked **[GAP]** are genuine, stated limitations — not smoothed over. This document is the canonical DMS deep-dive entry point — `README.md`, `ARCHITECTURE.md` and `CONTRIBUTING.md` all now point here rather than at the retired `dms-docs.html`.
 
 

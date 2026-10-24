@@ -226,7 +226,7 @@ export async function releaseLegalHold(
         await Document.update({ isOnLegalHold: false }, { where: { id: rel.documentId }, transaction });
         await recomputeDisposalDate(rel.documentId, transaction);
 
-        // AUDIT-FINDINGS-2026-08-11 data-flow sweep #4: applyHoldToDocuments
+        // audit 2026-08-11 data-flow sweep #4: applyHoldToDocuments
         // fans out both a WEBSOCKET (webhook-eligible) event and an owner
         // email; release had neither — an integration that blocked/flagged
         // the document on DOCUMENT.HOLD_APPLIED had no signal to unblock it,

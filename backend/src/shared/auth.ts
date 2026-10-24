@@ -71,7 +71,7 @@ const CUTOFF_NONE = 'none';
  * until natural expiry (finding C5) and a demoted user keeps stale
  * permissions (finding H9).
  *
- * R-04 (Documentations/audits/AUDIT-FINDINGS-2026-09-03.md): the cutoff used to live ONLY in Redis,
+ * R-04 (audit 2026-09-03): the cutoff used to live ONLY in Redis,
  * which made this function's contract impossible to honour consistently. It
  * was documented to fail CLOSED in production — "if the cutoff cannot be
  * persisted, the revocation is a lie, so we throw" — but three call sites had
@@ -116,7 +116,7 @@ export async function revokeAllUserSessions(
   // passing only because Redis was unreachable in dev (see MINIO_ENDPOINT in
   // .env.example for why) and the cache path was never exercised.
   //
-  // afterCommit is the pattern DMS's CLAUDE.md prescribes for exactly this —
+  // afterCommit is this project's convention for exactly this —
   // cache invalidation that must not observe an uncommitted write. Note the
   // transaction here is usually the ambient per-request one, so "after commit"
   // means at response-flush time, not when this function returns.
@@ -434,7 +434,7 @@ async function getPublicKey(header: jwt.JwtHeader): Promise<string> {
  * Same issuer/audience computation every RS256 verify in this codebase must
  * use — DMS-minted tokens (pre-tenant, MFA-pending, and the full access
  * token) are all signed with the same iss/aud pair (see auth.routes.ts's
- * jwt.sign calls). Documentations/audits/AUDIT-FINDINGS-2026-07-26.md #9: /select-tenant and
+ * jwt.sign calls). audit 2026-07-26 #9: /select-tenant and
  * /totp/validate used to call jwt.verify directly with only `algorithms`
  * pinned, skipping this check — a code-consistency gap (and a latent one if
  * JWKS/multi-issuer trust is ever extended) that this helper closes by
