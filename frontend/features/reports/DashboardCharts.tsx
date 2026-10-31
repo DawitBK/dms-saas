@@ -40,7 +40,7 @@ export interface TrendPoint {
 export function TrendAreaChart({ data }: { data: TrendPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 4 }}>
+      <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
         <defs>
           <linearGradient id="dms-trend-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={CHART_SERIES_COLORS[0]} stopOpacity={0.35} />
@@ -56,7 +56,7 @@ export function TrendAreaChart({ data }: { data: TrendPoint[] }) {
           minTickGap={24}
           tickFormatter={(v: string) => v.slice(5)}
         />
-        <YAxis tick={chartAxisTick} axisLine={false} tickLine={false} allowDecimals={false} width={32} />
+        <YAxis tick={chartAxisTick} axisLine={false} tickLine={false} allowDecimals={false} width={44} />
         <Tooltip
           contentStyle={chartTooltipStyle}
           labelStyle={chartTooltipLabelStyle}
@@ -93,7 +93,7 @@ export function DistributionBarChart({ data }: { data: DistributionRow[] }) {
   const manyCategories = data.length > 5;
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: manyCategories ? 40 : 8 }}>
+      <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: manyCategories ? 40 : 8 }}>
         <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="name"
@@ -106,7 +106,7 @@ export function DistributionBarChart({ data }: { data: DistributionRow[] }) {
           height={manyCategories ? 56 : 30}
           tickFormatter={(v: string) => (v && v.length > 14 ? `${v.slice(0, 13)}…` : v)}
         />
-        <YAxis tick={chartAxisTick} axisLine={false} tickLine={false} allowDecimals={false} width={32} />
+        <YAxis tick={chartAxisTick} axisLine={false} tickLine={false} allowDecimals={false} width={44} />
         <Tooltip
           contentStyle={chartTooltipStyle}
           labelStyle={chartTooltipLabelStyle}
