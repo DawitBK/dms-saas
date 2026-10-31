@@ -8,6 +8,11 @@ import { SOCKET_PATH, SOCKET_URL } from "../shared/lib/apiConfig";
 import { useAuthStore } from "../state/auth.store";
 import { useRealtimeStore } from "../state/realtime.store";
 
+// A host that cannot pass a WebSocket upgrade (Vercel's rewrites) sets NEXT_PUBLIC_SOCKET_TRANSPORTS=polling, so the browser does not
+// make an upgrade attempt that is certain to fail and log an error on every page. Everywhere else the default stands: WebSocket first.
+const SOCKET_TRANSPORTS: ("websocket" | "polling")[] =
+  process.env.NEXT_PUBLIC_SOCKET_TRANSPORTS === "polling" ? ["polling"] : ["websocket", "polling"];
+
 // Module scope, not inside the component. It is a constant lookup table, and
 // rebuilding it on every render made it a changing dependency of the socket
 // effect below (react-hooks/exhaustive-deps), which is why the effect could
@@ -106,7 +111,7 @@ export function RealtimeBridge() {
         // "polling" is kept as the SECOND entry deliberately: it is the
         // degradation path for a network that genuinely cannot carry a
         // WebSocket, not the starting point.
-        transports: ["websocket", "polling"],
+        transports: SOCKET_TRANSPORTS,
         // Reconnect indefinitely with backoff. The defaults are already close
         // to this; stated explicitly because the fallback-poll design in
         // state/realtime.store.ts depends on the socket actually trying to
